@@ -10,6 +10,5 @@ export const firebaseConfig = {
   measurementId: "G-REMGR4Q5P6"
 };
 
-export const adminEmail = "niwansathsara76@gmail.com";
 // IMPORTANT: Replace with the exact Google email allowed to add/remove lessons.
 export const adminEmail = "niwansathsara76@gmail.com";
