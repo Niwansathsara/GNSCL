@@ -163,7 +163,7 @@ import { firebaseConfig, adminEmail } from "./firebase-config.js";
     });
   }
 
-  function normalizeVideo(input) {  function normalizeVideo(input) {
+  function normalizeVideo(input) {  
   if (!input || typeof input !== 'object') return null;
 
   const title = String(input.title || '').trim().slice(0, 100);
