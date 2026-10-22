@@ -1,5 +1,26 @@
+import { initializeApp } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-app.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-auth.js";
+import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot, writeBatch } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-firestore.js";
+import { firebaseConfig, adminEmail } from "./firebase-config.js";
+
 (() => {
   'use strict';
+
+  const requiredConfigKeys = ['apiKey', 'authDomain', 'projectId', 'appId'];
+  const firebaseConfigured = requiredConfigKeys.every((key) => {
+    const value = String(firebaseConfig?.[key] || '').trim();
+    return value && !/PASTE_|YOUR_PROJECT_ID|YOUR_/i.test(value);
+  }) && /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(String(adminEmail || '').trim())
+    && !/YOUR_GOOGLE_EMAIL/i.test(String(adminEmail || ''));
+  const normalizedAdminEmail = String(adminEmail || '').trim().toLowerCase();
+  let firebaseApp = null;
+  let auth = null;
+  let db = null;
+  if (firebaseConfigured) {
+    firebaseApp = initializeApp(firebaseConfig);
+    auth = getAuth(firebaseApp);
+    db = getFirestore(firebaseApp);
+  }
 
   const VIDEO_STORAGE = 'gns-class-library-local-v1';
   const SAVED_STORAGE = 'gns-class-library-saved-v1';
@@ -34,10 +55,15 @@
     videoFrame: document.getElementById('videoFrame'),
     toast: document.getElementById('toast'),
     toastText: document.getElementById('toastText'),
-    importFile: document.getElementById('importFile')
+    importFile: document.getElementById('importFile'),
+    adminLoginBtn: document.getElementById('adminLoginBtn'),
+    adminLogoutBtn: document.getElementById('adminLogoutBtn')
   };
 
   let sharedVideos = [];
+  let currentUser = null;
+  let isAdmin = false;
+  let firestoreUnsubscribe = null;
   let localVideos = readJSON(VIDEO_STORAGE, []);
   if (!Array.isArray(localVideos)) localVideos = [];
   let saved = new Set(readJSON(SAVED_STORAGE, []));
@@ -63,17 +89,19 @@
   }
 
   function getAllVideos() {
+    const source = firebaseConfigured ? sharedVideos : [...sharedVideos, ...localVideos];
     const ids = new Set();
-    return [...sharedVideos, ...localVideos].filter((video) => {
+    return source.filter((video) => {
       if (!video || !video.id || ids.has(video.id)) return false;
       ids.add(video.id);
       return true;
-    }).map((video) => ({ ...video, isLocal: localVideos.some((local) => local.id === video.id) }));
+    }).map((video) => ({ ...video, isLocal: !firebaseConfigured && localVideos.some((local) => local.id === video.id) }));
   }
 
   async function loadSharedVideos() {
-    // On a hosted website, videos.json is the public catalogue. file:// browsing may block fetch;
-    // local additions still work in that case and can be exported as videos.json.
+    // Before Firebase is configured, keep public videos.json compatibility for an existing static site.
+    // In the secured version, Firestore is the shared source of truth.
+    if (firebaseConfigured) return;
     try {
       const response = await fetch(`videos.json?v=${Date.now()}`, { cache: 'no-store' });
       if (response.ok) {
@@ -82,6 +110,57 @@
       }
     } catch (_) { /* Expected when opened straight from the file system. */ }
     render();
+  }
+
+  function startFirestoreListener() {
+    if (!db || firestoreUnsubscribe) return;
+    firestoreUnsubscribe = onSnapshot(collection(db, 'videos'), (snapshot) => {
+      sharedVideos = snapshot.docs.map((item) => normalizeVideo({ ...item.data(), id: item.id })).filter(Boolean);
+      render();
+    }, (error) => {
+      console.error('Firestore read failed:', error);
+      notify('Could not load the shared library. Check Firebase Firestore rules and setup.');
+    });
+  }
+
+  function applyAdminControls() {
+    document.querySelectorAll('[data-admin-only]').forEach((element) => {
+      element.classList.toggle('hidden', !isAdmin);
+    });
+    els.adminLoginBtn.classList.toggle('hidden', isAdmin);
+    els.adminLogoutBtn.classList.toggle('hidden', !isAdmin);
+    els.adminLoginBtn.textContent = firebaseConfigured ? 'Admin login' : 'Admin setup needed';
+    els.adminLogoutBtn.textContent = 'Sign out';
+    els.adminLogoutBtn.title = currentUser?.email ? `Signed in as ${currentUser.email}` : 'Sign out of admin mode';
+    document.body.classList.toggle('is-admin', isAdmin);
+  }
+
+  function initializeAdminAccess() {
+    applyAdminControls();
+    if (!firebaseConfigured || !auth) {
+      loadSharedVideos();
+      return;
+    }
+    onAuthStateChanged(auth, async (user) => {
+      const matchesAdmin = !!user
+        && String(user.email || '').trim().toLowerCase() === normalizedAdminEmail
+        && user.emailVerified === true;
+      if (user && !matchesAdmin) {
+        currentUser = null;
+        isAdmin = false;
+        applyAdminControls();
+        try { await signOut(auth); } catch (_) { /* Ignore sign-out cleanup errors. */ }
+        notify('This Google account is not authorised to manage GNS Class Library.');
+        startFirestoreListener();
+        render();
+        return;
+      }
+      currentUser = matchesAdmin ? user : null;
+      isAdmin = matchesAdmin;
+      applyAdminControls();
+      startFirestoreListener();
+      render();
+    });
   }
 
   function normalizeVideo(input) {
@@ -143,7 +222,7 @@
     const description = video.description || 'A class video to revisit whenever you are ready to study.';
     const dateLabel = formatDate(video.createdAt);
     const sourceBadge = video.isLocal ? '<span class="local-tag">LOCAL DRAFT</span>' : '';
-    const localDelete = video.isLocal ? `<button class="delete-local" data-delete="${safeText(video.id)}" type="button">Remove local draft</button>` : '';
+    const localDelete = isAdmin ? `<button class="delete-local" data-delete="${safeText(video.id)}" type="button">Remove video</button>` : '';
     return `<article class="video-card" style="animation-delay:${Math.min(index * 45, 240)}ms">
       <div class="video-thumbnail" data-play="${safeText(video.id)}" aria-label="Play ${safeText(video.title)}">
         ${thumbnailMarkup(video)}
@@ -212,9 +291,17 @@
     els.videoGrid.classList.toggle('hidden', noVideosAtAll || filtered.length === 0);
     els.emptyState.classList.toggle('hidden', !noVideosAtAll && filtered.length !== 0);
     if (noVideosAtAll) {
-      els.emptyState.querySelector('h3').textContent = 'Your next great lesson starts here.';
-      els.emptyState.querySelector('p').textContent = 'No class videos have been added yet. Paste a YouTube lesson link to begin building your library.';
-      els.emptyState.querySelector('.empty-tip').textContent = 'Tip: use a shareable YouTube video link, not a private classroom link.';
+      if (isAdmin) {
+        els.emptyState.querySelector('h3').textContent = 'Your next great lesson starts here.';
+        els.emptyState.querySelector('p').textContent = 'Add a YouTube lesson and it will be published to the shared library for everyone.';
+        els.emptyState.querySelector('.empty-tip').textContent = 'Only your authorised Google account can publish or remove videos.';
+      } else {
+        els.emptyState.querySelector('h3').textContent = firebaseConfigured ? 'No lessons published yet.' : 'The library is being set up.';
+        els.emptyState.querySelector('p').textContent = firebaseConfigured
+          ? 'New class videos will appear here after the library owner publishes them.'
+          : 'The library owner is setting up secure publishing. Please check back soon.';
+        els.emptyState.querySelector('.empty-tip').textContent = '';
+      }
     } else if (filtered.length === 0) {
       els.emptyState.querySelector('h3').textContent = onlySaved ? 'Nothing saved just yet.' : 'No videos match this search.';
       els.emptyState.querySelector('p').textContent = onlySaved ? 'Tap the heart on any lesson to keep it here for your next revision session.' : 'Try another keyword or subject, or clear the filters to see the full library.';
@@ -233,6 +320,10 @@
   }
 
   function openAddModal(subject = '') {
+    if (!isAdmin || !db) {
+      notify(firebaseConfigured ? 'Only the authorised site owner can add videos.' : 'Admin uploads are not configured yet. Follow FIREBASE_SETUP_SI.md.');
+      return;
+    }
     lastFocus = document.activeElement;
     if (subject) {
       const subjectSelect = document.getElementById('videoSubject');
@@ -282,6 +373,7 @@
   }
 
   function exportLibrary() {
+    if (!isAdmin) { notify('Only the authorised site owner can export the library.'); return; }
     const all = getAllVideos().map(({ isLocal, ...video }) => video);
     const blob = new Blob([`${JSON.stringify(all, null, 2)}\n`], { type: 'application/json;charset=utf-8' });
     const url = URL.createObjectURL(blob);
@@ -297,8 +389,9 @@
     render();
   }
 
-  function addVideo(event) {
+  async function addVideo(event) {
     event.preventDefault();
+    if (!isAdmin || !db) { notify('Only the authorised site owner can publish videos.'); return; }
     const form = new FormData(els.addForm);
     const url = String(form.get('url') || '').trim();
     if (!isValidYouTubeUrl(url)) {
@@ -312,44 +405,92 @@
       url, description: form.get('description'), createdAt: Date.now()
     });
     if (!next) return;
-    localVideos.unshift(next);
-    storeLocalVideos();
-    selectedSubject = next.subject;
-    onlySaved = false;
-    els.search.value = '';
-    els.sort.value = 'newest';
-    els.addForm.reset();
-    closeModal(els.addModal);
-    render();
-    notify('Added as a local draft. Export to publish for everyone.');
-    document.getElementById('library').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    try {
+      await setDoc(doc(db, 'videos', next.id), next);
+      selectedSubject = next.subject;
+      onlySaved = false;
+      els.search.value = '';
+      els.sort.value = 'newest';
+      els.addForm.reset();
+      closeModal(els.addModal);
+      notify('Video published to the shared library.');
+      document.getElementById('library').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } catch (error) {
+      console.error('Publishing failed:', error);
+      els.formError.textContent = 'Could not publish the video. Check Firestore rules, admin email and sign-in setup.';
+      els.formError.classList.remove('hidden');
+    }
   }
 
   function importLibraryFile(file) {
     if (!file) return;
+    if (!isAdmin || !db) { notify('Only the authorised site owner can import videos.'); els.importFile.value = ''; return; }
     const reader = new FileReader();
-    reader.onload = () => {
+    reader.onload = async () => {
       try {
         const data = JSON.parse(String(reader.result));
         if (!Array.isArray(data)) throw new Error('The JSON file must contain a list of videos.');
         const normalized = data.map(normalizeVideo).filter(Boolean);
         if (data.length && normalized.length === 0) throw new Error('No valid YouTube video entries were found in that file.');
-        const map = new Map();
-        [...sharedVideos, ...normalized].forEach((video) => map.set(video.id, video));
-        localVideos = [...map.values()].filter((video) => !sharedVideos.some((shared) => shared.id === video.id));
-        storeLocalVideos();
+        if (normalized.length > 2000) throw new Error('Please import at most 2,000 videos at a time.');
+        for (let i = 0; i < normalized.length; i += 400) {
+          const batch = writeBatch(db);
+          normalized.slice(i, i + 400).forEach((video) => {
+            batch.set(doc(db, 'videos', video.id), video);
+          });
+          await batch.commit();
+        }
         selectedSubject = 'all'; onlySaved = false;
-        render();
-        notify(`Imported ${normalized.length} video${normalized.length === 1 ? '' : 's'}`);
+        notify(`Published ${normalized.length} video${normalized.length === 1 ? '' : 's'} to the shared library.`);
       } catch (error) {
-        notify(error.message || 'Could not read that JSON file.');
+        console.error('Import failed:', error);
+        notify(error.message || 'Could not import that JSON file. Check Firestore permissions.');
       }
       els.importFile.value = '';
     };
-    reader.onerror = () => notify('Could not read the selected file.');
+    reader.onerror = () => { notify('Could not read the selected file.'); els.importFile.value = ''; };
     reader.readAsText(file);
   }
 
+  async function deletePublishedVideo(id) {
+    if (!isAdmin || !db) { notify('Only the authorised site owner can remove videos.'); return; }
+    if (!window.confirm('Remove this video from the public library?')) return;
+    try {
+      await deleteDoc(doc(db, 'videos', id));
+      saved.delete(id); storeSaved();
+      notify('Video removed from the shared library.');
+    } catch (error) {
+      console.error('Delete failed:', error);
+      notify('Could not remove this video. Check Firestore rules and admin sign-in.');
+    }
+  }
+
+  async function handleAdminLogin() {
+    if (!firebaseConfigured || !auth) {
+      notify('Set up Firebase first. Follow FIREBASE_SETUP_SI.md, then upload firebase-config.js.');
+      return;
+    }
+    try {
+      await signInWithPopup(auth, new GoogleAuthProvider());
+    } catch (error) {
+      console.error('Admin sign-in failed:', error);
+      const message = error?.code === 'auth/popup-blocked'
+        ? 'Your browser blocked the sign-in popup. Allow popups and try again.'
+        : error?.code === 'auth/unauthorized-domain'
+          ? 'Add niwansathsara.github.io under Firebase Authentication > Settings > Authorized domains.'
+          : 'Google sign-in failed. Check that the Google provider is enabled in Firebase Authentication.';
+      notify(message);
+    }
+  }
+
+  async function handleAdminLogout() {
+    if (!auth) return;
+    try { await signOut(auth); notify('Signed out of admin mode.'); }
+    catch (error) { console.error('Sign-out failed:', error); notify('Could not sign out. Please refresh the page.'); }
+  }
+
+  els.adminLoginBtn.addEventListener('click', handleAdminLogin);
+  els.adminLogoutBtn.addEventListener('click', handleAdminLogout);
   document.getElementById('openAddModal').addEventListener('click', () => openAddModal());
   ['heroAddBtn', 'sectionAddBtn', 'emptyAddBtn', 'subjectsAddBtn'].forEach((id) => document.getElementById(id)?.addEventListener('click', () => openAddModal()));
   document.querySelectorAll('[data-close-modal]').forEach((button) => button.addEventListener('click', () => closeModal(els.addModal)));
@@ -380,8 +521,8 @@
     const deleteButton = event.target.closest('[data-delete]');
     if (deleteButton) {
       const id = deleteButton.dataset.delete;
-      localVideos = localVideos.filter((video) => video.id !== id);
-      saved.delete(id); storeLocalVideos(); storeSaved(); render(); notify('Local draft removed'); return;
+      deletePublishedVideo(id);
+      return;
     }
     const playButton = event.target.closest('[data-play]');
     if (playButton) {
@@ -428,6 +569,7 @@
     }
   });
   document.getElementById('yearNow').textContent = String(new Date().getFullYear());
+  applyAdminControls();
   render();
-  loadSharedVideos();
+  initializeAdminAccess();
 })();
