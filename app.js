@@ -388,7 +388,6 @@ const preview = newestVideo ? `
 
   </article>
 `;
-          `;
         }).join('')
       : '';
 
