@@ -1,7 +1,7 @@
 // GNS Class Library Firebase settings for project gnscl-1291a.
 // Firebase web config is meant to be used in client-side code; Firestore Rules secure writes.
 export const firebaseConfig = {
-  apiKey: "AIzaSyDBsreeIhUUpx0lQm9zVY0E_cK2t9MIZDo",
+  apiKey: "AIzaSyDBsreeIhUUpx0lQm9zVY0E_cK2t9MIDzo",
   authDomain: "gnscl-1291a.firebaseapp.com",
   projectId: "gnscl-1291a",
   storageBucket: "gnscl-1291a.firebasestorage.app",
