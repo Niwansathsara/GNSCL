@@ -631,6 +631,20 @@ import { firebaseConfig, adminEmail } from "./firebase-config.js";
     render();
   });
   els.videoGrid.addEventListener('click', (event) => {
+    const playlistButton = event.target.closest('[data-toggle-playlist]');
+
+if (playlistButton) {
+  const key = playlistButton.dataset.togglePlaylist;
+
+  if (openPlaylists.has(key)) {
+    openPlaylists.delete(key);
+  } else {
+    openPlaylists.add(key);
+  }
+
+  render();
+  return;
+}
     const saveButton = event.target.closest('[data-save]');
     if (saveButton) {
       event.stopPropagation();
