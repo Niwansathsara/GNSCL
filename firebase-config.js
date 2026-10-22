@@ -11,4 +11,4 @@ export const firebaseConfig = {
 };
 
 // IMPORTANT: Replace with the exact Google email allowed to add/remove lessons.
-export const adminEmail = "YOUR_GOOGLE_EMAIL@gmail.com";
+export const adminEmail = "YOUR_GOOGLE_niwansathsara76@gmail.com";
