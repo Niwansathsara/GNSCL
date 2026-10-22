@@ -116,7 +116,21 @@
       <div class="modal-head"><div><span class="modal-eyebrow">GROW THE COLLECTION</span><h2 id="modalTitle">Add a class video</h2><p>Keep a useful lesson one search away.</p></div><button class="modal-close" data-close-modal type="button" aria-label="Close dialog">×</button></div>
       <form id="addVideoForm">
         <label class="field-label" for="videoTitle">Video title <span>*</span></label><input class="form-control" id="videoTitle" name="title" type="text" placeholder="e.g. Mechanics — Introduction" maxlength="100" required />
-        <div class="form-row"><div><label class="field-label" for="videoSubject">Subject <span>*</span></label><select class="form-control" id="videoSubject" name="subject" required><option value="" disabled selected>Choose subject</option><option>Physics</option><option>Chemistry</option><option>Biology</option><option>Combined Maths</option><option>ICT</option><option>English</option><option>Other</option></select></div><div><label class="field-label" for="videoTeacher">Teacher / class <small>optional</small></label><input class="form-control" id="videoTeacher" name="teacher" type="text" placeholder="e.g. Sir's revision class" maxlength="80" /></div></div>
+       <label class="field-label" for="videoPlaylist">
+  Playlist / lesson name <span>*</span>
+</label>
+<input
+  class="form-control"
+  id="videoPlaylist"
+  name="playlist"
+  type="text"
+  placeholder="e.g. Mechanics — Lesson 01"
+  maxlength="80"
+  required
+/>
+<p class="field-hint">
+  Use the same playlist name for every video in this lesson.
+</p> <div class="form-row"><div><label class="field-label" for="videoSubject">Subject <span>*</span></label><select class="form-control" id="videoSubject" name="subject" required><option value="" disabled selected>Choose subject</option><option>Physics</option><option>Chemistry</option><option>Biology</option><option>Combined Maths</option><option>ICT</option><option>English</option><option>Other</option></select></div><div><label class="field-label" for="videoTeacher">Teacher / class <small>optional</small></label><input class="form-control" id="videoTeacher" name="teacher" type="text" placeholder="e.g. Sir's revision class" maxlength="80" /></div></div>
         <label class="field-label" for="videoUrl">YouTube video link <span>*</span></label><div class="input-with-icon"><span>↗</span><input class="form-control" id="videoUrl" name="url" type="url" placeholder="https://www.youtube.com/watch?v=…" required /></div><p class="field-hint">Use a public or unlisted link that viewers are allowed to access. Private videos will not play for everyone.</p>
         <label class="field-label" for="videoDescription">Short note <small>optional</small></label><textarea class="form-control textarea" id="videoDescription" name="description" rows="2" maxlength="180" placeholder="What will students learn in this video?"></textarea>
         <div class="form-consent"><span class="consent-icon">✓</span><p>I have permission to share this video link with the intended audience.</p></div>
