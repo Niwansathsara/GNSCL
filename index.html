@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#f7f9ff" />
+  <meta name="description" content="A clean, community-minded library for class videos and study resources." />
+  <title>GNS Class Library — Learn together</title>
+  <link rel="icon" type="image/svg+xml" href="assets/gns-logo.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="ambient ambient-one" aria-hidden="true"></div>
+  <div class="ambient ambient-two" aria-hidden="true"></div>
+
+  <header class="site-header">
+    <a class="brand" href="#top" aria-label="GNS Class Library home">
+      <img src="assets/gns-logo.svg" alt="GNS logo" class="brand-mark" />
+      <span class="brand-copy"><strong>GNS <span>Class Library</span></strong><small>LEARN TOGETHER</small></span>
+    </a>
+    <nav class="main-nav" aria-label="Main navigation">
+      <a class="nav-link active" href="#library">Library</a>
+      <a class="nav-link" href="#subjects">Subjects</a>
+      <a class="nav-link" href="#about">About</a>
+    </nav>
+    <div class="header-actions">
+      <button class="button button-quiet import-trigger" id="importBtn" type="button" title="Import a saved videos.json file">↑ <span class="import-label">Import JSON</span></button>
+      <button class="button button-quiet export-trigger" id="exportBtn" type="button" title="Export the library for your hosted website"><span class="download-icon">↓</span><span class="export-label">Export library</span></button>
+      <button class="button button-primary header-add" id="openAddModal" type="button"><span class="plus-icon">+</span> Add a video</button>
+      <button class="mobile-menu" id="mobileMenu" aria-label="Open navigation" aria-expanded="false" type="button"><span></span><span></span></button>
+    </div>
+  </header>
+
+  <main id="top">
+    <section class="hero wrap" aria-labelledby="hero-title">
+      <div class="hero-copy">
+        <div class="eyebrow"><span class="eyebrow-dot"></span> YOUR STUDY SPACE, ALL IN ONE PLACE</div>
+        <h1 id="hero-title">Good lessons.<br /><span>One easy place.</span></h1>
+        <p class="hero-subtitle">A simple home for class recordings, revision videos and the little links that make learning easier.</p>
+        <div class="hero-actions">
+          <a class="button button-primary button-large" href="#library">Explore the library <span aria-hidden="true">↘</span></a>
+          <button class="button button-outline button-large" id="heroAddBtn" type="button"><span class="plus-icon">+</span> Add class video</button>
+        </div>
+        <div class="hero-proof"><div class="avatar-stack" aria-hidden="true"><span>G</span><span>N</span><span>S</span></div><span>Made for focused learning</span><span class="proof-dot">·</span><span class="proof-muted">by G. Niwan Sathsara</span></div>
+      </div>
+      <div class="hero-visual" aria-label="Illustration of a study video library">
+        <div class="visual-orbit orbit-a"></div><div class="visual-orbit orbit-b"></div>
+        <div class="floating-chip chip-top"><span class="chip-icon chip-play">▶</span><span><b>Class recordings</b><small>All in one library</small></span></div>
+        <div class="floating-chip chip-bottom"><span class="chip-icon chip-bookmark">♡</span><span><b>Save for later</b><small>Your revision list</small></span></div>
+        <div class="hero-device">
+          <div class="device-top"><span class="device-dots"><i></i><i></i><i></i></span><span class="device-tag">GNS LIBRARY</span><span class="device-avatar">G</span></div>
+          <div class="device-heading"><span class="mini-overline">YOUR LEARNING SPACE</span><b>Pick up where<br />you left off.</b></div>
+          <div class="device-feature">
+            <div class="feature-art"><div class="art-sun"></div><div class="art-hill hill-a"></div><div class="art-hill hill-b"></div><div class="art-play">▶</div></div>
+            <div class="feature-lines"><span class="line-long"></span><span class="line-short"></span><div><span class="tiny-pill"></span><span class="tiny-pill pale"></span></div></div>
+          </div>
+          <div class="device-list"><span class="list-dot dot-blue">∑</span><span class="list-lines"><i></i><i></i></span><span class="list-time">VIDEO</span></div>
+          <div class="device-list"><span class="list-dot dot-violet">✳</span><span class="list-lines"><i></i><i></i></span><span class="list-time">NOTES</span></div>
+        </div>
+        <div class="decor-star star-a">✳</div><div class="decor-star star-b">✦</div><div class="decor-spark spark-a"></div><div class="decor-spark spark-b"></div>
+      </div>
+      <div class="hero-bottom-note"><span class="note-line"></span><span>Less searching. More understanding.</span></div>
+    </section>
+
+    <section class="quick-stats wrap" aria-label="Library overview">
+      <div class="stat-item"><span class="stat-icon blue-icon">▤</span><span class="stat-copy"><strong id="statVideos">0</strong><small>Videos in library</small></span></div>
+      <div class="stat-item"><span class="stat-icon purple-icon">◈</span><span class="stat-copy"><strong id="statSubjects">0</strong><small>Subjects covered</small></span></div>
+      <div class="stat-item"><span class="stat-icon peach-icon">♡</span><span class="stat-copy"><strong id="statSaved">0</strong><small>Saved for later</small></span></div>
+      <div class="stat-footnote"><span class="live-pulse"></span> Your learning library, at your pace</div>
+    </section>
+
+    <section class="library-section wrap" id="library" aria-labelledby="library-title">
+      <div class="section-heading">
+        <div><div class="eyebrow section-eyebrow">THE COLLECTION</div><h2 id="library-title">Class video library<span class="heading-period">.</span></h2><p class="section-subtitle">Find a lesson, revisit a topic or save a video for your next study session.</p></div>
+        <button class="button button-outline section-add" id="sectionAddBtn" type="button"><span class="plus-icon">+</span> Add a video</button>
+      </div>
+      <div class="library-toolbar">
+        <label class="search-box" for="searchInput"><span class="search-symbol" aria-hidden="true"></span><input id="searchInput" type="search" placeholder="Search topics, teachers, subjects…" autocomplete="off" /><kbd>⌕</kbd></label>
+        <div class="toolbar-right"><label class="sort-wrap" for="sortSelect"><span>Sort:</span><select id="sortSelect"><option value="newest">Recently added</option><option value="oldest">Oldest first</option><option value="az">Title A–Z</option></select></label><button class="icon-button" id="favoritesToggle" type="button" aria-pressed="false" title="Show saved videos"><span>♡</span></button></div>
+      </div>
+      <div class="filter-row" id="subjectFilters" aria-label="Filter by subject"><button class="filter-chip active" data-subject="all" type="button">All videos <span id="allCount">0</span></button></div>
+      <div class="result-line"><span id="resultsLabel">Getting your library ready…</span><button class="text-button hidden" id="clearFilters" type="button">Clear filters <span>×</span></button></div>
+      <div class="video-grid" id="videoGrid" aria-live="polite"></div>
+      <div class="empty-state" id="emptyState">
+        <div class="empty-illustration"><div class="empty-circle circle-one"></div><div class="empty-circle circle-two"></div><div class="empty-video"><span>▶</span></div><div class="empty-spark">✦</div></div>
+        <h3>Your next great lesson starts here.</h3>
+        <p>No class videos have been added yet. Paste a YouTube lesson link to begin building your library.</p>
+        <button class="button button-primary" id="emptyAddBtn" type="button"><span class="plus-icon">+</span> Add your first video</button>
+        <small class="empty-tip">Tip: use a shareable YouTube video link, not a private classroom link.</small>
+      </div>
+    </section>
+
+    <section class="subjects-section" id="subjects">
+      <div class="wrap subjects-inner"><div class="subjects-copy"><div class="eyebrow">MAKE IT YOURS</div><h2>Every subject.<br /><span>One study habit.</span></h2><p>Keep lessons organised by subject so it is easier to find what you need before a class, a test or an exam.</p><button class="text-link" id="subjectsAddBtn" type="button">Start building your library <span>↗</span></button></div>
+        <div class="subject-cards">
+          <button class="subject-card subject-physics" type="button" data-quick-subject="Physics"><span class="subject-card-top"><span class="subject-symbol">∑</span><span class="subject-arrow">↗</span></span><strong>Physics</strong><small>Concepts made clear</small><span class="subject-count" data-subject-count="Physics">0 lessons</span><span class="subject-decoration physics-decoration">∫</span></button>
+          <button class="subject-card subject-chemistry" type="button" data-quick-subject="Chemistry"><span class="subject-card-top"><span class="subject-symbol">⚗</span><span class="subject-arrow">↗</span></span><strong>Chemistry</strong><small>Reactions to revision</small><span class="subject-count" data-subject-count="Chemistry">0 lessons</span><span class="subject-decoration chemistry-decoration">✣</span></button>
+          <button class="subject-card subject-biology" type="button" data-quick-subject="Biology"><span class="subject-card-top"><span class="subject-symbol">⌬</span><span class="subject-arrow">↗</span></span><strong>Biology</strong><small>Understand living systems</small><span class="subject-count" data-subject-count="Biology">0 lessons</span><span class="subject-decoration biology-decoration">❋</span></button>
+          <button class="subject-card subject-other" type="button" data-quick-subject="Other"><span class="subject-card-top"><span class="subject-symbol">✎</span><span class="subject-arrow">↗</span></span><strong>Other subjects</strong><small>Build your own collection</small><span class="subject-count" data-subject-count="Other">0 lessons</span><span class="subject-decoration other-decoration">✦</span></button>
+        </div>
+      </div>
+    </section>
+
+    <section class="about-section wrap" id="about"><div class="about-mark"><img src="assets/gns-logo.svg" alt="" /></div><div class="about-text"><div class="eyebrow">A LITTLE NOTE</div><h2>Built to make learning easier.</h2><p>GNS Class Library is a learning-link organiser made for students to collect useful lessons in one clean, searchable place.</p></div><div class="creator-card"><span class="creator-label">CREATED BY</span><strong>G. Niwan Sathsara</strong><span class="creator-sub">A student-built study space <span>✦</span></span></div></section>
+  </main>
+
+  <footer class="site-footer"><div class="wrap footer-inner"><a class="footer-brand" href="#top"><img src="assets/gns-logo.svg" alt="" /><span>GNS Class Library</span></a><span class="footer-note">Learn together. Grow together.</span><span class="footer-copy">© <span id="yearNow"></span> G. Niwan Sathsara</span></div><div class="wrap permission-note">Please only share or publish class recordings and links that you have permission to distribute. Private or restricted class materials should stay private.</div></footer>
+
+  <div class="modal-backdrop hidden" id="addModal" role="presentation">
+    <section class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="modal-head"><div><span class="modal-eyebrow">GROW THE COLLECTION</span><h2 id="modalTitle">Add a class video</h2><p>Keep a useful lesson one search away.</p></div><button class="modal-close" data-close-modal type="button" aria-label="Close dialog">×</button></div>
+      <form id="addVideoForm">
+        <label class="field-label" for="videoTitle">Video title <span>*</span></label><input class="form-control" id="videoTitle" name="title" type="text" placeholder="e.g. Mechanics — Introduction" maxlength="100" required />
+        <div class="form-row"><div><label class="field-label" for="videoSubject">Subject <span>*</span></label><select class="form-control" id="videoSubject" name="subject" required><option value="" disabled selected>Choose subject</option><option>Physics</option><option>Chemistry</option><option>Biology</option><option>Combined Maths</option><option>ICT</option><option>English</option><option>Other</option></select></div><div><label class="field-label" for="videoTeacher">Teacher / class <small>optional</small></label><input class="form-control" id="videoTeacher" name="teacher" type="text" placeholder="e.g. Sir's revision class" maxlength="80" /></div></div>
+        <label class="field-label" for="videoUrl">YouTube video link <span>*</span></label><div class="input-with-icon"><span>↗</span><input class="form-control" id="videoUrl" name="url" type="url" placeholder="https://www.youtube.com/watch?v=…" required /></div><p class="field-hint">Use a public or unlisted link that viewers are allowed to access. Private videos will not play for everyone.</p>
+        <label class="field-label" for="videoDescription">Short note <small>optional</small></label><textarea class="form-control textarea" id="videoDescription" name="description" rows="2" maxlength="180" placeholder="What will students learn in this video?"></textarea>
+        <div class="form-consent"><span class="consent-icon">✓</span><p>I have permission to share this video link with the intended audience.</p></div>
+        <div class="form-error hidden" id="formError" role="alert"></div>
+        <div class="modal-actions"><button class="button button-outline" data-close-modal type="button">Cancel</button><button class="button button-primary" type="submit">Add to library <span>↗</span></button></div>
+      </form>
+      <p class="modal-storage-note"><span>ⓘ</span> This static version saves new links in this browser. To publish them for everyone, choose <b>Export library</b> and upload the resulting <code>videos.json</code> with your hosted website.</p>
+    </section>
+  </div>
+
+  <div class="modal-backdrop hidden" id="playerModal" role="presentation"><section class="player-panel" role="dialog" aria-modal="true" aria-labelledby="playerTitle"><div class="player-head"><div><span id="playerSubject" class="player-subject">LESSON</span><h2 id="playerTitle">Class video</h2><p id="playerTeacher"></p></div><button class="modal-close" data-close-player type="button" aria-label="Close video">×</button></div><div class="player-frame-wrap"><iframe id="videoFrame" title="YouTube lesson player" src="" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe></div><div class="player-foot"><p id="playerDescription"></p><a id="openYoutubeLink" class="text-link" href="#" target="_blank" rel="noopener noreferrer">Open on YouTube ↗</a></div></section></div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"><span class="toast-check">✓</span><span id="toastText">Done</span></div>
+  <input class="hidden" type="file" id="importFile" accept="application/json,.json" />
+  <script src="app.js"></script>
+</body>
+</html>
