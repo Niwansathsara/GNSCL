@@ -388,10 +388,8 @@ const preview = newestVideo ? `
 
   </article>
 `;
-        }).join('')
-      : '';
 
-    return `
+   return `
       <section class="playlist-section">
 
         <div class="playlist-heading">
