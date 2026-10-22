@@ -163,19 +163,32 @@ import { firebaseConfig, adminEmail } from "./firebase-config.js";
     });
   }
 
-  function normalizeVideo(input) {   if (!input || typeof input !== 'object') return null;    const title = String(input.title || '').trim().slice(0, 100);   const subject = String(input.subject || 'Other').trim().slice(0, 40) || 'Other';   const playlist = String(input.playlist || 'General videos')     .trim().slice(0, 80) || 'General videos';   const url = String(input.url || '').trim();    if (!title || !isValidYouTubeUrl(url)) return null;    return {     id: String(input.id || makeId()),     title,     subject,     playlist,     teacher: String(input.teacher || '').trim().slice(0, 80),     url,     description: String(input.description || '').trim().slice(0, 180),     createdAt: Number(input.createdAt) || Date.now()   }; } {   if (!input || typeof input !== 'object') return null;    const title = String(input.title || '').trim().slice(0, 100);   const subject = String(input.subject || 'Other').trim().slice(0, 40) || 'Other';   const playlist = String(input.playlist || 'General videos')     .trim().slice(0, 80) || 'General videos';   const url = String(input.url || '').trim();    if (!title || !isValidYouTubeUrl(url)) return null;    return {     id: String(input.id || makeId()),     title,     subject,     playlist,     teacher: String(input.teacher || '').trim().slice(0, 80),     url,     description: String(input.description || '').trim().slice(0, 180),     createdAt: Number(input.createdAt) || Date.now()   }; } {   if (!input || typeof input !== 'object') return null;    const title = String(input.title || '').trim().slice(0, 100);   const subject = String(input.subject || 'Other').trim().slice(0, 40) || 'Other';   const playlist = String(input.playlist || 'General videos')     .trim().slice(0, 80) || 'General videos';   const url = String(input.url || '').trim();    if (!title || !isValidYouTubeUrl(url)) return null;    return {     id: String(input.id || makeId()),     title,     subject,     playlist,     teacher: String(input.teacher || '').trim().slice(0, 80),     url,     description: String(input.description || '').trim().slice(0, 180),     createdAt: Number(input.createdAt) || Date.now()   }; } {   if (!input || typeof input !== 'object') return null;    const title = String(input.title || '').trim().slice(0, 100);   const subject = String(input.subject || 'Other').trim().slice(0, 40) || 'Other';   const playlist = String(input.playlist || 'General videos')     .trim().slice(0, 80) || 'General videos';   const url = String(input.url || '').trim();    if (!title || !isValidYouTubeUrl(url)) return null;    return {     id: String(input.id || makeId()),     title,     subject,     playlist,     teacher: String(input.teacher || '').trim().slice(0, 80),     url,     description: String(input.description || '').trim().slice(0, 180),     createdAt: Number(input.createdAt) || Date.now()   }; } {   if (!input || typeof input !== 'object') return null;    const title = String(input.title || '').trim().slice(0, 100);   const subject = String(input.subject || 'Other').trim().slice(0, 40) || 'Other';   const playlist = String(input.playlist || 'General videos')     .trim().slice(0, 80) || 'General videos';   const url = String(input.url || '').trim();    if (!title || !isValidYouTubeUrl(url)) return null;    return {     id: String(input.id || makeId()),     title,     subject,     playlist,     teacher: String(input.teacher || '').trim().slice(0, 80),     url,     description: String(input.description || '').trim().slice(0, 180),     createdAt: Number(input.createdAt) || Date.now()   }; } {
-    if (!input || typeof input !== 'object') return null;
-    const title = String(input.title || '').trim().slice(0, 100);
-    const subject = String(input.subject || 'Other').trim().slice(0, 40) || 'Other';
-    const url = String(input.url || '').trim();
-    if (!title || !isValidYouTubeUrl(url)) return null;
-    return {
-      id: String(input.id || makeId()), title, subject,
-      teacher: String(input.teacher || '').trim().slice(0, 80),
-      url, description: String(input.description || '').trim().slice(0, 180),
-      createdAt: Number(input.createdAt) || Date.now()
-    };
-  }
+  function normalizeVideo(input) {  function normalizeVideo(input) {
+  if (!input || typeof input !== 'object') return null;
+
+  const title = String(input.title || '').trim().slice(0, 100);
+
+  const subject = String(input.subject || 'Other')
+    .trim().slice(0, 40) || 'Other';
+
+  const playlist = String(input.playlist || 'General videos')
+    .trim().slice(0, 80) || 'General videos';
+
+  const url = String(input.url || '').trim();
+
+  if (!title || !isValidYouTubeUrl(url)) return null;
+
+  return {
+    id: String(input.id || makeId()),
+    title,
+    subject,
+    playlist,
+    teacher: String(input.teacher || '').trim().slice(0, 80),
+    url,
+    description: String(input.description || '').trim().slice(0, 180),
+    createdAt: Number(input.createdAt) || Date.now()
+  };
+}
 
   function makeId() {
     return `gns-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
