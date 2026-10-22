@@ -292,37 +292,112 @@ import { firebaseConfig, adminEmail } from "./firebase-config.js";
     });
   }
 
-  function renderPlaylistGroups(videos) {
+ function renderPlaylistGroups(videos) {
   const groups = new Map();
 
   videos.forEach((video) => {
-    const name = String(video.playlist || 'General videos').trim()
-      || 'General videos';
+    const name = String(video.playlist || 'General videos')
+      .trim()
+      .replace(/\s+/g, ' ') || 'General videos';
 
-    if (!groups.has(name)) {
-      groups.set(name, []);
+    const key = name.toLocaleLowerCase();
+
+    if (!groups.has(key)) {
+      groups.set(key, { name, items: [] });
     }
 
-    groups.get(name).push(video);
+    groups.get(key).items.push(video);
   });
 
-  return [...groups.entries()].map(([name, items]) => `
-    <section class="playlist-section">
-      <div class="playlist-heading">
-        <div>
-          <span class="playlist-eyebrow">STUDY PLAYLIST</span>
-          <h3>${safeText(name)}</h3>
-        </div>
-        <span class="playlist-count">
-          ${items.length} ${items.length === 1 ? 'video' : 'videos'}
-        </span>
-      </div>
+  return [...groups.entries()].map(([key, group]) => {
+    const { name, items } = group;
+    const isOpen = openPlaylists.has(key);
 
-      <div class="playlist-video-grid">
-        ${items.map(renderVideoCard).join('')}
-      </div>
-    </section>
-  `).join('');
+    const videoRows = isOpen
+      ? items.map((video) => {
+          const id = safeText(video.id);
+          const title = safeText(video.title);
+          const subject = safeText(video.subject || 'Other');
+          const teacher = safeText(video.teacher || 'Class resource');
+          const isSaved = saved.has(video.id);
+
+          return `
+            <article class="playlist-video-row">
+
+              <button
+                class="playlist-play-icon"
+                data-play="${id}"
+                type="button"
+                aria-label="Play ${title}"
+              >▶</button>
+
+              <div class="playlist-video-main">
+                <button
+                  class="playlist-video-title"
+                  data-play="${id}"
+                  type="button"
+                >${title}</button>
+
+                <div class="playlist-video-meta">
+                  ${subject} · ${teacher}
+                </div>
+              </div>
+
+              <div class="playlist-row-actions">
+                <button
+                  class="bookmark-button ${isSaved ? 'saved' : ''}"
+                  data-save="${id}"
+                  type="button"
+                  aria-label="${isSaved ? 'Unsave video' : 'Save video'}"
+                >${isSaved ? '♥' : '♡'}</button>
+
+                ${isAdmin ? `
+                  <button
+                    class="playlist-remove-button"
+                    data-delete="${id}"
+                    type="button"
+                  >Remove</button>
+                ` : ''}
+              </div>
+
+            </article>
+          `;
+        }).join('')
+      : '';
+
+    return `
+      <section class="playlist-section">
+
+        <div class="playlist-heading">
+          <div class="playlist-heading-copy">
+            <span class="playlist-eyebrow">STUDY PLAYLIST</span>
+            <h3>${safeText(name)}</h3>
+          </div>
+
+          <div class="playlist-heading-actions">
+            <span class="playlist-count">
+              ${items.length}
+              ${items.length === 1 ? 'video' : 'videos'}
+            </span>
+
+            <button
+              class="playlist-toggle"
+              data-toggle-playlist="${safeText(key)}"
+              type="button"
+              aria-expanded="${isOpen}"
+            >${isOpen ? 'Close −' : 'View videos +'}</button>
+          </div>
+        </div>
+
+        ${isOpen ? `
+          <div class="playlist-video-list">
+            ${videoRows}
+          </div>
+        ` : ''}
+
+      </section>
+    `;
+  }).join('');
 }
   function render() {
     const all = getAllVideos();
