@@ -433,7 +433,7 @@ import { firebaseConfig, adminEmail } from "./firebase-config.js";
       return;
     }
     const next = normalizeVideo({
-      id: makeId(), title: form.get('title'), subject: form.get('subject'), teacher: form.get('teacher'),
+      id: makeId(), title: form.get('title'), subject: form.get('subject'), playlist: form.get('playlist'), teacher: form.get('teacher'),
       url, description: form.get('description'), createdAt: Date.now()
     });
     if (!next) return;
