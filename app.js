@@ -293,7 +293,7 @@ import { firebaseConfig, adminEmail } from "./firebase-config.js";
     });
   }
 
- function renderPlaylistGroups(videos) {
+function renderPlaylistGroups(videos) {
   const groups = new Map();
 
   videos.forEach((video) => {
@@ -312,24 +312,47 @@ import { firebaseConfig, adminEmail } from "./firebase-config.js";
 
   return [...groups.entries()].map(([key, group]) => {
     const { name, items } = group;
-    items.sort((a, b) =>
-  (Number(b.createdAt) || 0) -
-  (Number(a.createdAt) || 0)
-);
 
-const newestVideo = items[0];
+    const timestamp = (value) => {
+      if (typeof value === 'number') return value;
 
-const preview = newestVideo ? `
-  <button
-    class="playlist-preview"
-    data-play="${safeText(newestVideo.id)}"
-    type="button"
-    aria-label="Play latest video"
-  >
-    ${thumbnailMarkup(newestVideo)}
-    <span class="playlist-preview-play">▶</span>
-  </button>
-` : '';
+      if (typeof value === 'string') {
+        const number = Number(value);
+        if (Number.isFinite(number) && number > 0) return number;
+
+        const date = Date.parse(value);
+        return Number.isFinite(date) ? date : 0;
+      }
+
+      if (value && typeof value === 'object') {
+        if (typeof value.toMillis === 'function') {
+          return value.toMillis();
+        }
+
+        if (Number.isFinite(Number(value.seconds))) {
+          return Number(value.seconds) * 1000;
+        }
+      }
+
+      return 0;
+    };
+
+    items.sort((a, b) => timestamp(b.createdAt) - timestamp(a.createdAt));
+
+    const newestVideo = items[0];
+
+    const preview = newestVideo ? `
+      <button
+        class="playlist-preview"
+        data-play="${safeText(newestVideo.id)}"
+        type="button"
+        aria-label="Play latest video"
+      >
+        ${thumbnailMarkup(newestVideo)}
+        <span class="playlist-preview-play">▶</span>
+      </button>
+    ` : '';
+
     const isOpen = openPlaylists.has(key);
 
     const videoRows = isOpen
@@ -341,62 +364,60 @@ const preview = newestVideo ? `
           const isSaved = saved.has(video.id);
 
           return `
-      return `
-  <article class="playlist-video-row">
+            <article class="playlist-video-row">
 
-    <button
-      class="playlist-video-thumb"
-      data-play="${id}"
-      type="button"
-      aria-label="Play ${title}"
-    >
-      ${thumbnailMarkup(video)}
-      <span class="playlist-video-thumb-overlay">▶</span>
-    </button>
+              <button
+                class="playlist-video-thumb"
+                data-play="${id}"
+                type="button"
+                aria-label="Play ${title}"
+              >
+                ${thumbnailMarkup(video)}
+                <span class="playlist-video-thumb-overlay">▶</span>
+              </button>
 
-    <div class="playlist-video-main">
+              <div class="playlist-video-main">
+                <button
+                  class="playlist-video-title"
+                  data-play="${id}"
+                  type="button"
+                >${title}</button>
 
-      <button
-        class="playlist-video-title"
-        data-play="${id}"
-        type="button"
-      >${title}</button>
+                <div class="playlist-video-meta">
+                  ${subject} · ${teacher}
+                </div>
 
-      <div class="playlist-video-meta">
-        ${subject} · ${teacher}
-      </div>
+                <div class="playlist-row-actions">
+                  <button
+                    class="bookmark-button ${isSaved ? 'saved' : ''}"
+                    data-save="${id}"
+                    type="button"
+                    aria-label="${isSaved ? 'Unsave video' : 'Save video'}"
+                  >${isSaved ? '♥' : '♡'}</button>
 
-      <div class="playlist-row-actions">
+                  ${isAdmin ? `
+                    <button
+                      class="playlist-remove-button"
+                      data-delete="${id}"
+                      type="button"
+                    >Remove</button>
+                  ` : ''}
+                </div>
+              </div>
 
-        <button
-          class="bookmark-button ${isSaved ? 'saved' : ''}"
-          data-save="${id}"
-          type="button"
-          aria-label="${isSaved ? 'Unsave video' : 'Save video'}"
-        >${isSaved ? '♥' : '♡'}</button>
+            </article>
+          `;
+        }).join('')
+      : '';
 
-        ${isAdmin ? `
-          <button
-            class="playlist-remove-button"
-            data-delete="${id}"
-            type="button"
-          >Remove</button>
-        ` : ''}
-
-      </div>
-    </div>
-
-  </article>
-`;
-
-   return `
+    return `
       <section class="playlist-section">
-
         <div class="playlist-heading">
           <div class="playlist-heading-copy">
             <span class="playlist-eyebrow">STUDY PLAYLIST</span>
             <h3>${safeText(name)}</h3>
           </div>
+
           ${preview}
 
           <div class="playlist-heading-actions">
@@ -419,7 +440,6 @@ const preview = newestVideo ? `
             ${videoRows}
           </div>
         ` : ''}
-
       </section>
     `;
   }).join('');
