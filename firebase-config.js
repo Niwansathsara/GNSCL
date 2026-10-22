@@ -1,8 +1,7 @@
-// GNS Class Library Firebase configuration
-// Replace YOUR_GOOGLE_EMAIL@gmail.com with the exact Google account allowed to manage videos.
-// Keep Firestore Security Rules published; Firebase web config values are client-side settings.
+// GNS Class Library Firebase settings for project gnscl-1291a.
+// Firebase web config is meant to be used in client-side code; Firestore Rules secure writes.
 export const firebaseConfig = {
-  apiKey: "AIzaSyDBsreeIhUUpx0lQm9zVY0E_cK2t9MIDzo",
+  apiKey: "AIzaSyDBsreeIhUUpx0lQm9zVY0E_cK2t9MIZDo",
   authDomain: "gnscl-1291a.firebaseapp.com",
   projectId: "gnscl-1291a",
   storageBucket: "gnscl-1291a.firebasestorage.app",
@@ -11,4 +10,5 @@ export const firebaseConfig = {
   measurementId: "G-REMGR4Q5P6"
 };
 
-export const adminEmail = "YOUR_GOOGLE_niwansathsara76@gmail.com";
+// IMPORTANT: Replace with the exact Google email allowed to add/remove lessons.
+export const adminEmail = "YOUR_GOOGLE_EMAIL@gmail.com";

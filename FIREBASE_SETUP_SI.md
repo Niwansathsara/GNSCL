@@ -7,7 +7,7 @@
 2. **Create a project / Add project** තෝරන්න. Project එකකට නමක් දෙන්න (උදා: `gns-class-library`) සහ project එක සාදන්න. Analytics අවශ්‍ය නැත්නම් disable කළ හැකියි.
 3. Project overview තුළ **Web (</>)** icon එක තෝරලා web app එකක් register කරන්න.
 4. Firebase පෙන්වන config object එකේ `apiKey`, `authDomain`, `projectId`, `appId` values ගන්න.
-5. මෙම folder එකේ `firebase-config.js` file එක open කරලා placeholders වෙනුවට ඔබේ values paste කරන්න. `adminEmail` එකට videos upload කරන්න භාවිතා කරන exact Google email එක දාන්න.
+5. මෙම package එකේ `firebase-config.js` තුළ screenshot එකේ Firebase project values දැනටමත් ඇතුළත් කරලා තියෙනවා. `adminEmail` එකට videos upload කරන්න භාවිතා කරන exact Google email එක දාන්න.
 
 ## 2. Google sign-in enable කරන්න
 1. Firebase Console → **Authentication** → **Get started** → **Sign-in method** යන්න.
@@ -26,7 +26,7 @@
 - `styles.css`
 - `app.js`
 - `firebase-config.js`
-- `assets/gns-logo.svg`
+- `gns-logo.svg`
 
 `firestore.rules`, `FIREBASE_SETUP_SI.md`, `README.md` repository එකේ තබාගන්න පුළුවන්; website display සඳහා rules file එක browser එකෙන් භාවිතා නොවේ. Commit changes කරලා `https://niwansathsara.github.io/GNSCL/` open කර `Ctrl + F5` කරන්න.
 

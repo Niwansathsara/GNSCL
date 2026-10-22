@@ -6,9 +6,9 @@ Modern light-themed responsive static website for GitHub Pages. Public visitors 
 - `index.html` — page structure
 - `styles.css` — design and responsive styling
 - `app.js` — library UI, Firebase Auth and Firestore integration
-- `firebase-config.js` — project configuration placeholders; update before deploying
+- `firebase-config.js` — Firebase project values are prefilled; replace the admin email before deploying
 - `firestore.rules` — copy into Firebase Console → Firestore Database → Rules, after replacing the admin email
-- `assets/gns-logo.svg` — GNS logo
+- `gns-logo.svg` — GNS logo
 - `FIREBASE_SETUP_SI.md` — full Sinhala setup instructions
 
 ## Important
