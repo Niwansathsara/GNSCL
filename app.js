@@ -163,7 +163,7 @@ import { firebaseConfig, adminEmail } from "./firebase-config.js";
     });
   }
 
-  function normalizeVideo(input) {
+  function normalizeVideo(input) {   if (!input || typeof input !== 'object') return null;    const title = String(input.title || '').trim().slice(0, 100);   const subject = String(input.subject || 'Other').trim().slice(0, 40) || 'Other';   const playlist = String(input.playlist || 'General videos')     .trim().slice(0, 80) || 'General videos';   const url = String(input.url || '').trim();    if (!title || !isValidYouTubeUrl(url)) return null;    return {     id: String(input.id || makeId()),     title,     subject,     playlist,     teacher: String(input.teacher || '').trim().slice(0, 80),     url,     description: String(input.description || '').trim().slice(0, 180),     createdAt: Number(input.createdAt) || Date.now()   }; } {   if (!input || typeof input !== 'object') return null;    const title = String(input.title || '').trim().slice(0, 100);   const subject = String(input.subject || 'Other').trim().slice(0, 40) || 'Other';   const playlist = String(input.playlist || 'General videos')     .trim().slice(0, 80) || 'General videos';   const url = String(input.url || '').trim();    if (!title || !isValidYouTubeUrl(url)) return null;    return {     id: String(input.id || makeId()),     title,     subject,     playlist,     teacher: String(input.teacher || '').trim().slice(0, 80),     url,     description: String(input.description || '').trim().slice(0, 180),     createdAt: Number(input.createdAt) || Date.now()   }; } {   if (!input || typeof input !== 'object') return null;    const title = String(input.title || '').trim().slice(0, 100);   const subject = String(input.subject || 'Other').trim().slice(0, 40) || 'Other';   const playlist = String(input.playlist || 'General videos')     .trim().slice(0, 80) || 'General videos';   const url = String(input.url || '').trim();    if (!title || !isValidYouTubeUrl(url)) return null;    return {     id: String(input.id || makeId()),     title,     subject,     playlist,     teacher: String(input.teacher || '').trim().slice(0, 80),     url,     description: String(input.description || '').trim().slice(0, 180),     createdAt: Number(input.createdAt) || Date.now()   }; } {   if (!input || typeof input !== 'object') return null;    const title = String(input.title || '').trim().slice(0, 100);   const subject = String(input.subject || 'Other').trim().slice(0, 40) || 'Other';   const playlist = String(input.playlist || 'General videos')     .trim().slice(0, 80) || 'General videos';   const url = String(input.url || '').trim();    if (!title || !isValidYouTubeUrl(url)) return null;    return {     id: String(input.id || makeId()),     title,     subject,     playlist,     teacher: String(input.teacher || '').trim().slice(0, 80),     url,     description: String(input.description || '').trim().slice(0, 180),     createdAt: Number(input.createdAt) || Date.now()   }; } {   if (!input || typeof input !== 'object') return null;    const title = String(input.title || '').trim().slice(0, 100);   const subject = String(input.subject || 'Other').trim().slice(0, 40) || 'Other';   const playlist = String(input.playlist || 'General videos')     .trim().slice(0, 80) || 'General videos';   const url = String(input.url || '').trim();    if (!title || !isValidYouTubeUrl(url)) return null;    return {     id: String(input.id || makeId()),     title,     subject,     playlist,     teacher: String(input.teacher || '').trim().slice(0, 80),     url,     description: String(input.description || '').trim().slice(0, 180),     createdAt: Number(input.createdAt) || Date.now()   }; } {
     if (!input || typeof input !== 'object') return null;
     const title = String(input.title || '').trim().slice(0, 100);
     const subject = String(input.subject || 'Other').trim().slice(0, 40) || 'Other';
@@ -250,7 +250,7 @@ import { firebaseConfig, adminEmail } from "./firebase-config.js";
     const all = getAllVideos();
     const query = els.search.value.trim().toLocaleLowerCase();
     let list = all.filter((video) => {
-      const text = [video.title, video.subject, video.teacher, video.description].join(' ').toLocaleLowerCase();
+      const text = [   video.title,   video.subject,   video.teacher,   video.description,   video.playlist ].join(' ').toLocaleLowerCase();
       return (!query || text.includes(query)) && (selectedSubject === 'all' || video.subject === selectedSubject) && (!onlySaved || saved.has(video.id));
     });
     if (els.sort.value === 'oldest') list.sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
@@ -279,6 +279,38 @@ import { firebaseConfig, adminEmail } from "./firebase-config.js";
     });
   }
 
+  function renderPlaylistGroups(videos) {
+  const groups = new Map();
+
+  videos.forEach((video) => {
+    const name = String(video.playlist || 'General videos').trim()
+      || 'General videos';
+
+    if (!groups.has(name)) {
+      groups.set(name, []);
+    }
+
+    groups.get(name).push(video);
+  });
+
+  return [...groups.entries()].map(([name, items]) => `
+    <section class="playlist-section">
+      <div class="playlist-heading">
+        <div>
+          <span class="playlist-eyebrow">STUDY PLAYLIST</span>
+          <h3>${safeText(name)}</h3>
+        </div>
+        <span class="playlist-count">
+          ${items.length} ${items.length === 1 ? 'video' : 'videos'}
+        </span>
+      </div>
+
+      <div class="playlist-video-grid">
+        ${items.map(renderVideoCard).join('')}
+      </div>
+    </section>
+  `).join('');
+}
   function render() {
     const all = getAllVideos();
     const filtered = currentFilteredVideos();
@@ -286,7 +318,7 @@ import { firebaseConfig, adminEmail } from "./firebase-config.js";
     els.statVideos.textContent = String(all.length);
     els.statSubjects.textContent = String(new Set(all.map((video) => video.subject)).size);
     els.statSaved.textContent = String(saved.size);
-    els.videoGrid.innerHTML = filtered.map(renderVideoCard).join('');
+    els.videoGrid.innerHTML = renderPlaylistGroups(filtered);
     const noVideosAtAll = all.length === 0;
     els.videoGrid.classList.toggle('hidden', noVideosAtAll || filtered.length === 0);
     els.emptyState.classList.toggle('hidden', !noVideosAtAll && filtered.length !== 0);
