@@ -423,3 +423,68 @@
     height: 42px;
   }
 }
+/* Keep playlist preview small and neat */
+.playlist-heading {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  min-width: 0;
+}
+
+.playlist-heading-copy {
+  flex: 1 1 auto !important;
+  min-width: 0;
+}
+
+button.playlist-preview {
+  position: relative !important;
+  display: block !important;
+  flex: 0 0 82px !important;
+  width: 82px !important;
+  min-width: 82px !important;
+  max-width: 82px !important;
+  height: 52px !important;
+  min-height: 52px !important;
+  max-height: 52px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  border-radius: 9px !important;
+  cursor: pointer;
+}
+
+button.playlist-preview img {
+  position: absolute !important;
+  inset: 0 !important;
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+}
+
+button.playlist-preview .thumb-subject-art {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+button.playlist-preview-play,
+.playlist-preview-play {
+  position: absolute !important;
+  inset: 0 !important;
+  display: grid !important;
+  place-items: center !important;
+}
+
+@media (max-width: 560px) {
+  button.playlist-preview {
+    flex-basis: 68px !important;
+    width: 68px !important;
+    min-width: 68px !important;
+    max-width: 68px !important;
+    height: 43px !important;
+    min-height: 43px !important;
+    max-height: 43px !important;
+  }
+}
