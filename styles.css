@@ -157,3 +157,157 @@
     padding: 6px;
   }
 }
+/* Compact clickable playlist groups */
+
+.playlist-section {
+  overflow: hidden;
+  margin-bottom: 16px;
+  border: 1px solid #e5e9f8;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 5px 18px rgba(45, 60, 130, 0.05);
+}
+
+.playlist-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 15px 18px;
+  background: #fafbff;
+}
+
+.playlist-heading-copy {
+  min-width: 0;
+}
+
+.playlist-heading h3 {
+  margin: 5px 0 0;
+  font-size: 16px;
+  overflow-wrap: anywhere;
+}
+
+.playlist-heading-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.playlist-count {
+  padding: 6px 9px;
+  border-radius: 20px;
+  background: #e9edff;
+  color: #5368d9;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.playlist-toggle {
+  padding: 8px 11px;
+  border: 1px solid #dfe4ff;
+  border-radius: 9px;
+  background: #fff;
+  color: #4e61d3;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.playlist-toggle:hover {
+  background: #eef1ff;
+}
+
+.playlist-video-list {
+  padding: 0 18px;
+}
+
+.playlist-video-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 0;
+  border-top: 1px solid #edf0f8;
+}
+
+.playlist-play-icon {
+  display: grid;
+  flex: 0 0 34px;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border: none;
+  border-radius: 10px;
+  background: #edf0ff;
+  color: #5869df;
+  cursor: pointer;
+}
+
+.playlist-video-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.playlist-video-title {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #252e4c;
+  font-size: 13px;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+  overflow-wrap: anywhere;
+}
+
+.playlist-video-title:hover {
+  color: #5969e5;
+}
+
+.playlist-video-meta {
+  margin-top: 4px;
+  color: #8189a0;
+  font-size: 11px;
+  overflow-wrap: anywhere;
+}
+
+.playlist-row-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.playlist-remove-button {
+  padding: 5px 8px;
+  border: 1px solid #eee0e4;
+  border-radius: 7px;
+  background: white;
+  color: #a53d4d;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+@media (max-width: 560px) {
+  .playlist-heading {
+    padding: 12px;
+  }
+
+  .playlist-heading-actions {
+    gap: 6px;
+  }
+
+  .playlist-count {
+    padding: 5px 7px;
+  }
+
+  .playlist-toggle {
+    padding: 7px 8px;
+    font-size: 11px;
+  }
+
+  .playlist-video-list {
+    padding: 0 12px;
+  }
+}
