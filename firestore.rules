@@ -4,7 +4,7 @@ service cloud.firestore {
     function isSiteAdmin() {
       return request.auth != null
         && request.auth.token.email_verified == true
-        && request.auth.token.email == 'YOUR_GOOGLE_EMAIL@gmail.com';
+        && request.auth.token.email == 'niwansathsara76@gmail.com';
     }
 
     function validVideo(data, videoId) {
