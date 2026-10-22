@@ -341,45 +341,53 @@ const preview = newestVideo ? `
           const isSaved = saved.has(video.id);
 
           return `
-            <article class="playlist-video-row">
+      return `
+  <article class="playlist-video-row">
 
-              <button
-                class="playlist-play-icon"
-                data-play="${id}"
-                type="button"
-                aria-label="Play ${title}"
-              >▶</button>
+    <button
+      class="playlist-video-thumb"
+      data-play="${id}"
+      type="button"
+      aria-label="Play ${title}"
+    >
+      ${thumbnailMarkup(video)}
+      <span class="playlist-video-thumb-overlay">▶</span>
+    </button>
 
-              <div class="playlist-video-main">
-                <button
-                  class="playlist-video-title"
-                  data-play="${id}"
-                  type="button"
-                >${title}</button>
+    <div class="playlist-video-main">
 
-                <div class="playlist-video-meta">
-                  ${subject} · ${teacher}
-                </div>
-              </div>
+      <button
+        class="playlist-video-title"
+        data-play="${id}"
+        type="button"
+      >${title}</button>
 
-              <div class="playlist-row-actions">
-                <button
-                  class="bookmark-button ${isSaved ? 'saved' : ''}"
-                  data-save="${id}"
-                  type="button"
-                  aria-label="${isSaved ? 'Unsave video' : 'Save video'}"
-                >${isSaved ? '♥' : '♡'}</button>
+      <div class="playlist-video-meta">
+        ${subject} · ${teacher}
+      </div>
 
-                ${isAdmin ? `
-                  <button
-                    class="playlist-remove-button"
-                    data-delete="${id}"
-                    type="button"
-                  >Remove</button>
-                ` : ''}
-              </div>
+      <div class="playlist-row-actions">
 
-            </article>
+        <button
+          class="bookmark-button ${isSaved ? 'saved' : ''}"
+          data-save="${id}"
+          type="button"
+          aria-label="${isSaved ? 'Unsave video' : 'Save video'}"
+        >${isSaved ? '♥' : '♡'}</button>
+
+        ${isAdmin ? `
+          <button
+            class="playlist-remove-button"
+            data-delete="${id}"
+            type="button"
+          >Remove</button>
+        ` : ''}
+
+      </div>
+    </div>
+
+  </article>
+`;
           `;
         }).join('')
       : '';
