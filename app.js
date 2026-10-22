@@ -312,6 +312,24 @@ import { firebaseConfig, adminEmail } from "./firebase-config.js";
 
   return [...groups.entries()].map(([key, group]) => {
     const { name, items } = group;
+    items.sort((a, b) =>
+  (Number(b.createdAt) || 0) -
+  (Number(a.createdAt) || 0)
+);
+
+const newestVideo = items[0];
+
+const preview = newestVideo ? `
+  <button
+    class="playlist-preview"
+    data-play="${safeText(newestVideo.id)}"
+    type="button"
+    aria-label="Play latest video"
+  >
+    ${thumbnailMarkup(newestVideo)}
+    <span class="playlist-preview-play">▶</span>
+  </button>
+` : '';
     const isOpen = openPlaylists.has(key);
 
     const videoRows = isOpen
@@ -374,6 +392,7 @@ import { firebaseConfig, adminEmail } from "./firebase-config.js";
             <span class="playlist-eyebrow">STUDY PLAYLIST</span>
             <h3>${safeText(name)}</h3>
           </div>
+          ${preview}
 
           <div class="playlist-heading-actions">
             <span class="playlist-count">
