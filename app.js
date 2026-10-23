@@ -588,7 +588,8 @@ function renderPlaylistGroups(videos) {
 }
 
 els.playerModal.style.setProperty('position', 'fixed', 'important');
-els.playerModal.style.setProperty('z-index', '99999', 'important');
+els.playerModal.style.setProperty('inset', '0', 'important');
+els.playerModal.style.setProperty('z-index', '2147483647', 'important');
     
     els.playerModal.classList.remove('hidden');
     document.body.style.overflow = 'hidden';
