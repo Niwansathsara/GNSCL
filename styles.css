@@ -1140,3 +1140,100 @@ button.playlist-video-title {
     grid-template-columns: 1fr;
   }
 }
+/* Fix horizontal overflow on mobile */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: clip;
+}
+
+body {
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  overflow-x: hidden;
+}
+
+img,
+iframe,
+video {
+  max-width: 100%;
+}
+
+main,
+section,
+header,
+footer,
+#videoGrid,
+.playlist-catalog-root,
+.playlist-catalog-grid,
+.playlist-view-dialog,
+.playlist-view-grid {
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* Mobile layout */
+@media (max-width: 768px) {
+  #videoGrid {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .playlist-catalog-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    width: 100%;
+  }
+
+  .playlist-view-backdrop {
+    padding: 8px;
+    align-items: flex-start;
+  }
+
+  .playlist-view-dialog {
+    width: 100%;
+    max-width: 100%;
+    max-height: calc(100vh - 16px);
+    overflow-x: hidden;
+    padding: 14px;
+  }
+
+  .playlist-view-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10px;
+    width: 100%;
+  }
+
+  .playlist-catalog-card,
+  .video-card {
+    min-width: 0;
+  }
+
+  .video-title,
+  .playlist-catalog-title,
+  .playlist-video-title {
+    overflow-wrap: anywhere;
+  }
+
+  .playlist-view-header {
+    flex-wrap: wrap;
+  }
+
+  .main-nav {
+    max-width: 100%;
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 380px) {
+  .playlist-catalog-grid,
+  .playlist-view-grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+}
