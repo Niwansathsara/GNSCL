@@ -383,8 +383,7 @@ function renderPlaylistGroups(videos) {
         <article class="playlist-section playlist-catalog-card">
           <div class="playlist-heading">
             <div class="playlist-heading-copy">
-           
-              <h3>${safeText(name)}</h3>
+             <h3>${safeText(name)}</h3>
             </div>
 
             ${newestVideo ? `
