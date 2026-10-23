@@ -174,6 +174,9 @@ import { firebaseConfig, adminEmail } from "./firebase-config.js";
 
   const subject = String(input.subject || 'Other')
     .trim().slice(0, 40) || 'Other';
+    
+  const mainPlaylist = String(input.mainPlaylist || 'General')
+  .trim().slice(0, 80) || 'General';
 
   const playlist = String(input.playlist || 'General videos')
     .trim().slice(0, 80) || 'General videos';
