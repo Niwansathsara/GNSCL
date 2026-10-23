@@ -1427,3 +1427,112 @@ footer,
     gap: 10px !important;
   }
 }
+/* Main Playlist and lesson cards */
+#videoGrid:not(.hidden) {
+  display: block;
+}
+
+#videoGrid > .playlist-catalog-root {
+  width: 100%;
+  min-width: 0;
+}
+
+.playlist-catalog-grid {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 16px;
+  width: 100%;
+  min-width: 0;
+}
+
+.playlist-catalog-card {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid #e4e9f5;
+  border-radius: 15px;
+  background: #fff;
+}
+
+.playlist-catalog-preview {
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  padding: 0;
+  border: 0;
+  cursor: pointer;
+  background: #edf0ff;
+}
+
+.playlist-catalog-preview img,
+.playlist-catalog-preview .thumb-subject-art {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.playlist-catalog-preview-overlay {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: white;
+  font-weight: 700;
+  background: rgba(20, 30, 60, 0.25);
+}
+
+.playlist-catalog-info {
+  padding: 12px;
+}
+
+.playlist-catalog-title {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  text-align: left;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+
+.playlist-catalog-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+  font-size: 12px;
+}
+
+.subject-playlists-backdrop {
+  z-index: 900;
+}
+
+.playlist-view-backdrop {
+  z-index: 950 !important;
+}
+
+@media (max-width: 950px) {
+  .playlist-catalog-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 650px) {
+  .playlist-catalog-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10px;
+  }
+}
+
+@media (max-width: 380px) {
+  .playlist-catalog-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
