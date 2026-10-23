@@ -69,6 +69,7 @@ import { firebaseConfig, adminEmail } from "./firebase-config.js";
   let saved = new Set(readJSON(SAVED_STORAGE, []));
   const openPlaylists = new Set();
   let activePlaylistKey = null;
+  let activeMainCategoryKey = null;
   let activeSubjectModal = null;
   let selectedSubject = 'all';
   let onlySaved = false;
