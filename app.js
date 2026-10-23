@@ -477,7 +477,7 @@ function renderPlaylistGroups(videos) {
                 <span class="playlist-eyebrow">
                   ${safeText(playlist.name)}
                 </span>
-                <h3>${safeText(subjectGroup.name)} — ${safeText(playlist.name)} Videos</h3>
+               <h3>${safeText(playlist.name)} Videos</h3>
               </div>
 
               <button
