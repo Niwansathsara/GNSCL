@@ -294,69 +294,135 @@ import { firebaseConfig, adminEmail } from "./firebase-config.js";
   }
 
 function renderPlaylistGroups(videos) {
-  const groups = new Map();
+  const subjects = new Map();
 
   videos.forEach((video) => {
+    const subject = String(video.subject || 'Other').trim() || 'Other';
     const name = String(video.playlist || 'General videos')
       .trim()
       .replace(/\s+/g, ' ') || 'General videos';
 
-    const key = name.toLocaleLowerCase();
+    const subjectKey = subject.toLocaleLowerCase();
+    const playlistKey = `${subjectKey}::${name.toLocaleLowerCase()}`;
 
-    if (!groups.has(key)) {
-      groups.set(key, { name, items: [] });
+    if (!subjects.has(subjectKey)) {
+      subjects.set(subjectKey, {
+        name: subject,
+        playlists: new Map()
+      });
     }
 
-    groups.get(key).items.push(video);
+    const subjectGroup = subjects.get(subjectKey);
+
+    if (!subjectGroup.playlists.has(playlistKey)) {
+      subjectGroup.playlists.set(playlistKey, {
+        key: playlistKey,
+        name,
+        items: []
+      });
+    }
+
+    subjectGroup.playlists.get(playlistKey).items.push(video);
   });
 
-  return [...groups.entries()].map(([key, group]) => {
-    const { name, items } = group;
+  function videoTime(value) {
+    if (typeof value === 'number') return value;
 
-    const timestamp = (value) => {
-      if (typeof value === 'number') return value;
+    if (typeof value === 'string') {
+      const number = Number(value);
 
-      if (typeof value === 'string') {
-        const number = Number(value);
-        if (Number.isFinite(number) && number > 0) return number;
+      if (Number.isFinite(number) && number > 0) return number;
 
-        const date = Date.parse(value);
-        return Number.isFinite(date) ? date : 0;
+      const date = Date.parse(value);
+      return Number.isFinite(date) ? date : 0;
+    }
+
+    if (value && typeof value === 'object') {
+      if (typeof value.toMillis === 'function') {
+        return value.toMillis();
       }
 
-      if (value && typeof value === 'object') {
-        if (typeof value.toMillis === 'function') {
-          return value.toMillis();
-        }
-
-        if (Number.isFinite(Number(value.seconds))) {
-          return Number(value.seconds) * 1000;
-        }
+      if (Number.isFinite(Number(value.seconds))) {
+        return Number(value.seconds) * 1000;
       }
+    }
 
-      return 0;
-    };
+    return 0;
+  }
 
-    items.sort((a, b) => timestamp(b.createdAt) - timestamp(a.createdAt));
+  const subjectGroups = [...subjects.values()].sort((a, b) => {
+    const ai = SUBJECT_ORDER.indexOf(a.name);
+    const bi = SUBJECT_ORDER.indexOf(b.name);
 
-    const newestVideo = items[0];
+    if (ai < 0 && bi < 0) return a.name.localeCompare(b.name);
+    if (ai < 0) return 1;
+    if (bi < 0) return -1;
 
-    const preview = newestVideo ? `
-      <button
-        class="playlist-preview"
-        data-play="${safeText(newestVideo.id)}"
-        type="button"
-        aria-label="Play latest video"
-      >
-        ${thumbnailMarkup(newestVideo)}
-        <span class="playlist-preview-play">▶</span>
-      </button>
-    ` : '';
+    return ai - bi;
+  });
 
-    const isOpen = openPlaylists.has(key);
+  return subjectGroups.map((subjectGroup) => {
+    const playlists = [...subjectGroup.playlists.values()]
+      .map((playlist) => ({
+        ...playlist,
+        items: [...playlist.items].sort(
+          (a, b) => videoTime(b.createdAt) - videoTime(a.createdAt)
+        )
+      }))
+      .sort((a, b) =>
+        videoTime(b.items[0]?.createdAt) -
+        videoTime(a.items[0]?.createdAt)
+      );
 
-    const videoRows = isOpen
-      ? items.map((video) => {
+    const playlistCards = playlists.map((playlist) => {
+      const { key, name, items } = playlist;
+      const newestVideo = items[0];
+      const isOpen = openPlaylists.has(key);
+
+      return `
+        <article class="playlist-section playlist-catalog-card">
+          <div class="playlist-heading">
+            <div class="playlist-heading-copy">
+              <span class="playlist-eyebrow">
+                ${safeText(subjectGroup.name)}
+              </span>
+              <h3>${safeText(name)}</h3>
+            </div>
+
+            ${newestVideo ? `
+              <button
+                class="playlist-preview"
+                data-play="${safeText(newestVideo.id)}"
+                type="button"
+                aria-label="Play latest video"
+              >
+                ${thumbnailMarkup(newestVideo)}
+                <span class="playlist-preview-play">▶</span>
+              </button>
+            ` : ''}
+          </div>
+
+          <div class="playlist-heading-actions">
+            <span class="playlist-count">
+              ${items.length}
+              ${items.length === 1 ? 'video' : 'videos'}
+            </span>
+
+            <button
+              class="playlist-toggle"
+              data-toggle-playlist="${safeText(key)}"
+              type="button"
+              aria-expanded="${isOpen}"
+            >${isOpen ? 'Hide videos −' : 'View videos +'}</button>
+          </div>
+        </article>
+      `;
+    }).join('');
+
+    const expandedPlaylists = playlists
+      .filter((playlist) => openPlaylists.has(playlist.key))
+      .map((playlist) => {
+        const videoRows = playlist.items.map((video) => {
           const id = safeText(video.id);
           const title = safeText(video.title);
           const subject = safeText(video.subject || 'Other');
@@ -365,7 +431,6 @@ function renderPlaylistGroups(videos) {
 
           return `
             <article class="playlist-video-row">
-
               <button
                 class="playlist-video-thumb"
                 data-play="${id}"
@@ -404,42 +469,47 @@ function renderPlaylistGroups(videos) {
                   ` : ''}
                 </div>
               </div>
-
             </article>
           `;
-        }).join('')
-      : '';
+        }).join('');
+
+        return `
+          <section class="playlist-expanded-panel">
+            <header class="playlist-expanded-heading">
+              <div>
+                <span class="playlist-eyebrow">
+                  ${safeText(playlist.name)}
+                </span>
+                <h3>${safeText(subjectGroup.name)} — ${safeText(playlist.name)} Videos</h3>
+              </div>
+
+              <button
+                class="playlist-toggle"
+                data-toggle-playlist="${safeText(playlist.key)}"
+                type="button"
+                aria-expanded="true"
+              >Close −</button>
+            </header>
+
+            <div class="playlist-video-list">
+              ${videoRows}
+            </div>
+          </section>
+        `;
+      }).join('');
 
     return `
-      <section class="playlist-section">
-        <div class="playlist-heading">
-          <div class="playlist-heading-copy">
-            <span class="playlist-eyebrow">STUDY PLAYLIST</span>
-            <h3>${safeText(name)}</h3>
-          </div>
+      <section class="subject-playlists-group">
+        <header class="subject-playlists-heading">
+          <span class="playlist-eyebrow">SUBJECT</span>
+          <h2>${safeText(subjectGroup.name)}</h2>
+        </header>
 
-          ${preview}
-
-          <div class="playlist-heading-actions">
-            <span class="playlist-count">
-              ${items.length}
-              ${items.length === 1 ? 'video' : 'videos'}
-            </span>
-
-            <button
-              class="playlist-toggle"
-              data-toggle-playlist="${safeText(key)}"
-              type="button"
-              aria-expanded="${isOpen}"
-            >${isOpen ? 'Close −' : 'View videos +'}</button>
-          </div>
+        <div class="playlist-catalog-grid">
+          ${playlistCards}
         </div>
 
-        ${isOpen ? `
-          <div class="playlist-video-list">
-            ${videoRows}
-          </div>
-        ` : ''}
+        ${expandedPlaylists}
       </section>
     `;
   }).join('');
