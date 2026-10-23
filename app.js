@@ -795,16 +795,19 @@ if (openLesson) {
       deletePublishedVideo(id);
       return;
     }
-    const playButton = event.target.closest('[data-play]');
-    if (playButton) {
-      const video = getAllVideos().find((item) => item.id === playButton.dataset.play);
-      if (video) {
-  activeMainCategoryKey = null;
-  activePlaylistKey = null;
-  render();
-  openPlayer(video);
+const playButton = event.target.closest('[data-play]');
+
+if (playButton) {
+  const video = getAllVideos().find(
+    (item) => item.id === playButton.dataset.play
+  );
+
+  if (video) {
+    openPlayer(video);
+  }
+
+  return;
 }
-    }
   });
   document.querySelectorAll('[data-quick-subject]').forEach((button) => button.addEventListener('click', () => {
     const subject = button.dataset.quickSubject;
