@@ -610,15 +610,23 @@ function renderPlaylistGroups(videos) {
     `https://www.youtube-nocookie.com/embed/${encodeURIComponent(videoId)}?autoplay=1&rel=0`;
 
   els.playerModal.classList.remove('hidden');
+   if (!els.playerModal.matches(':popover-open')) {
+  els.playerModal.showPopover();
+}
   document.body.style.overflow = 'hidden';
 
   els.playerModal.querySelector('.modal-close').focus();
 }
 
   function closePlayer() {
-    els.videoFrame.src = '';
-    closeModal(els.playerModal);
+  els.videoFrame.src = '';
+
+  if (els.playerModal.matches(':popover-open')) {
+    els.playerModal.hidePopover();
   }
+
+  closeModal(els.playerModal);
+}
 
   function notify(message) {
     els.toastText.textContent = message;
