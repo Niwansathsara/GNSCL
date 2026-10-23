@@ -301,9 +301,9 @@ import { firebaseConfig, adminEmail } from "./firebase-config.js";
   }
 
 function renderPlaylistGroups(videos) {
-  const categoryMap = new Map();
+  const mainGroups = new Map();
 
-  function videoTime(value) {
+  function getTime(value) {
     if (typeof value === 'number') return value;
 
     if (typeof value === 'string') {
@@ -315,76 +315,57 @@ function renderPlaylistGroups(videos) {
     }
 
     if (value && typeof value === 'object') {
-      if (typeof value.toMillis === 'function') {
-        return value.toMillis();
-      }
-
-      if (Number.isFinite(Number(value.seconds))) {
-        return Number(value.seconds) * 1000;
-      }
+      if (typeof value.toMillis === 'function') return value.toMillis();
+      if (Number.isFinite(Number(value.seconds))) return Number(value.seconds) * 1000;
     }
 
     return 0;
   }
 
   videos.forEach((video) => {
-    const subject =
-      String(video.subject || 'Other').trim() || 'Other';
+    const subject = String(video.subject || 'Other').trim() || 'Other';
+    const mainName = String(video.mainPlaylist || 'General').trim() || 'General';
+    const lessonName = String(video.playlist || 'General videos').trim() || 'General videos';
 
-    const mainPlaylist =
-      String(video.mainPlaylist || 'General').trim() || 'General';
+    const mainKey = `${subject.toLowerCase()}::${mainName.toLowerCase()}`;
+    const lessonKey = `${mainKey}::${lessonName.toLowerCase()}`;
 
-    const name =
-      String(video.playlist || 'General videos')
-        .trim()
-        .replace(/\s+/g, ' ') || 'General videos';
-
-    const categoryKey =
-      `${subject.toLocaleLowerCase()}::${mainPlaylist.toLocaleLowerCase()}`;
-
-    const playlistKey =
-      `${categoryKey}::${name.toLocaleLowerCase()}`;
-
-    if (!categoryMap.has(categoryKey)) {
-      categoryMap.set(categoryKey, {
-        key: categoryKey,
+    if (!mainGroups.has(mainKey)) {
+      mainGroups.set(mainKey, {
+        key: mainKey,
         subject,
-        name: mainPlaylist,
-        playlists: new Map()
+        name: mainName,
+        items: [],
+        lessons: new Map()
       });
     }
 
-    const category = categoryMap.get(categoryKey);
+    const main = mainGroups.get(mainKey);
+    main.items.push(video);
 
-    if (!category.playlists.has(playlistKey)) {
-      category.playlists.set(playlistKey, {
-        key: playlistKey,
-        subject,
-        mainPlaylist,
-        name,
+    if (!main.lessons.has(lessonKey)) {
+      main.lessons.set(lessonKey, {
+        key: lessonKey,
+        name: lessonName,
         items: []
       });
     }
 
-    category.playlists.get(playlistKey).items.push(video);
+    main.lessons.get(lessonKey).items.push(video);
   });
 
-  const categories = [...categoryMap.values()].map((category) => {
-    const playlists = [...category.playlists.values()]
-      .map((playlist) => ({
-        ...playlist,
-        items: [...playlist.items].sort(
-          (a, b) => videoTime(b.createdAt) - videoTime(a.createdAt)
-        )
-      }))
-      .sort(
-        (a, b) =>
-          videoTime(b.items[0]?.createdAt) -
-          videoTime(a.items[0]?.createdAt)
-      );
-
-    return { ...category, playlists };
-  });
+  const categories = [...mainGroups.values()].map((main) => ({
+    ...main,
+    items: [...main.items].sort(
+      (a, b) => getTime(b.createdAt) - getTime(a.createdAt)
+    ),
+    lessons: [...main.lessons.values()].map((lesson) => ({
+      ...lesson,
+      items: [...lesson.items].sort(
+        (a, b) => getTime(b.createdAt) - getTime(a.createdAt)
+      )
+    }))
+  }));
 
   let activeCategory = categories.find(
     (category) => category.key === activeMainCategoryKey
@@ -395,60 +376,46 @@ function renderPlaylistGroups(videos) {
     activeCategory = null;
   }
 
-  const allPlaylists = categories.flatMap(
-    (category) => category.playlists
+  let activeLesson = activeCategory?.lessons.find(
+    (lesson) => lesson.key === activePlaylistKey
   );
 
-  let activePlaylist = allPlaylists.find(
-    (playlist) => playlist.key === activePlaylistKey
-  );
-
-  if (activePlaylistKey && !activePlaylist) {
+  if (activePlaylistKey && !activeLesson) {
     activePlaylistKey = null;
-    activePlaylist = null;
+    activeLesson = null;
   }
 
-  const mainCards = categories.map((category) => {
-    const allItems = category.playlists.flatMap(
-      (playlist) => playlist.items
-    );
-
-    allItems.sort(
-      (a, b) => videoTime(b.createdAt) - videoTime(a.createdAt)
-    );
-
-    const newestVideo = allItems[0];
-
+  const mainCards = categories.map((main) => {
     const title = selectedSubject === 'all'
-      ? `${category.subject} · ${category.name}`
-      : category.name;
+      ? `${main.subject} · ${main.name}`
+      : main.name;
+
+    const newest = main.items[0];
 
     return `
       <article class="playlist-catalog-card">
         <button
           class="playlist-catalog-preview"
-          data-open-main-category="${safeText(category.key)}"
+          data-open-main-category="${safeText(main.key)}"
           type="button"
           aria-label="Open ${safeText(title)}"
         >
-          ${newestVideo ? thumbnailMarkup(newestVideo) : ''}
-          <span class="playlist-catalog-preview-overlay">
-            View playlists ↗
-          </span>
+          ${newest ? thumbnailMarkup(newest) : ''}
+          <span class="playlist-catalog-preview-overlay">View playlists ↗</span>
         </button>
 
         <div class="playlist-catalog-info">
           <button
             class="playlist-catalog-title"
-            data-open-main-category="${safeText(category.key)}"
+            data-open-main-category="${safeText(main.key)}"
             type="button"
           >${safeText(title)}</button>
 
           <div class="playlist-catalog-footer">
-            <span>${category.playlists.length} playlists</span>
+            <span>${main.lessons.length} playlists</span>
             <button
               class="playlist-toggle"
-              data-open-main-category="${safeText(category.key)}"
+              data-open-main-category="${safeText(main.key)}"
               type="button"
             >View playlists ↗</button>
           </div>
@@ -458,39 +425,33 @@ function renderPlaylistGroups(videos) {
   }).join('');
 
   const lessonCards = activeCategory
-    ? activeCategory.playlists.map((playlist) => {
-        const newestVideo = playlist.items[0];
+    ? activeCategory.lessons.map((lesson) => {
+        const newest = lesson.items[0];
 
         return `
           <article class="playlist-catalog-card">
             <button
               class="playlist-catalog-preview"
-              data-open-playlist="${safeText(playlist.key)}"
+              data-open-lesson-playlist="${safeText(lesson.key)}"
               type="button"
-              aria-label="Open ${safeText(playlist.name)}"
+              aria-label="Open ${safeText(lesson.name)}"
             >
-              ${newestVideo ? thumbnailMarkup(newestVideo) : ''}
-              <span class="playlist-catalog-preview-overlay">
-                View videos ↗
-              </span>
+              ${newest ? thumbnailMarkup(newest) : ''}
+              <span class="playlist-catalog-preview-overlay">View videos ↗</span>
             </button>
 
             <div class="playlist-catalog-info">
               <button
                 class="playlist-catalog-title"
-                data-open-playlist="${safeText(playlist.key)}"
+                data-open-lesson-playlist="${safeText(lesson.key)}"
                 type="button"
-              >${safeText(playlist.name)}</button>
+              >${safeText(lesson.name)}</button>
 
               <div class="playlist-catalog-footer">
-                <span>
-                  ${playlist.items.length}
-                  ${playlist.items.length === 1 ? 'video' : 'videos'}
-                </span>
-
+                <span>${lesson.items.length} videos</span>
                 <button
                   class="playlist-toggle"
-                  data-open-playlist="${safeText(playlist.key)}"
+                  data-open-lesson-playlist="${safeText(lesson.key)}"
                   type="button"
                 >View videos ↗</button>
               </div>
@@ -500,63 +461,39 @@ function renderPlaylistGroups(videos) {
       }).join('')
     : '';
 
-  const categoryWindow = activeCategory ? `
+  const mainWindow = activeCategory ? `
     <div class="subject-playlists-backdrop" data-close-main-category>
-      <section
-        class="subject-playlists-dialog"
-        role="dialog"
-        aria-modal="true"
-        aria-label="${safeText(activeCategory.name)} playlists"
-      >
+      <section class="subject-playlists-dialog" role="dialog" aria-modal="true">
         <header class="subject-playlists-header">
           <div>
             <span class="playlist-eyebrow">MAIN PLAYLIST</span>
             <h2>${safeText(activeCategory.name)}</h2>
-            <p>Select a lesson playlist to see its videos.</p>
+            <p>Choose a lesson playlist to view its videos.</p>
           </div>
-
-          <button
-            class="subject-playlists-close"
-            data-close-main-category
-            type="button"
-          >✕ Close</button>
+          <button class="subject-playlists-close"
+            data-close-main-category type="button">✕ Close</button>
         </header>
-
-        <div class="playlist-catalog-grid">
-          ${lessonCards}
-        </div>
+        <div class="playlist-catalog-grid">${lessonCards}</div>
       </section>
     </div>
   ` : '';
 
-  const playlistWindow = activePlaylist ? `
-    <div class="playlist-view-backdrop" data-close-playlist>
-      <section
-        class="playlist-view-dialog"
-        role="dialog"
-        aria-modal="true"
-        aria-label="${safeText(activePlaylist.name)}"
-      >
+  const videoWindow = activeLesson ? `
+    <div class="playlist-view-backdrop" data-close-lesson-playlist>
+      <section class="playlist-view-dialog" role="dialog" aria-modal="true">
         <header class="playlist-view-header">
           <div>
-            <span class="playlist-eyebrow">
-              ${safeText(activePlaylist.subject)}
-            </span>
-            <h2>${safeText(activePlaylist.name)}</h2>
-            <p>${activePlaylist.items.length} videos</p>
+            <span class="playlist-eyebrow">${safeText(activeCategory.subject)}</span>
+            <h2>${safeText(activeLesson.name)}</h2>
+            <p>${activeLesson.items.length} videos</p>
           </div>
-
-          <button
-            class="playlist-view-close"
-            data-close-playlist
-            type="button"
-          >✕ Close</button>
+          <button class="playlist-view-close"
+            data-close-lesson-playlist type="button">✕ Close</button>
         </header>
-
         <div class="playlist-view-grid">
-          ${activePlaylist.items
-            .map((video, index) => renderVideoCard(video, index))
-            .join('')}
+          ${activeLesson.items.map((video, index) =>
+            renderVideoCard(video, index)
+          ).join('')}
         </div>
       </section>
     </div>
@@ -564,12 +501,9 @@ function renderPlaylistGroups(videos) {
 
   return `
     <div class="playlist-catalog-root">
-      <div class="playlist-catalog-grid">
-        ${mainCards}
-      </div>
-
-      ${categoryWindow}
-      ${playlistWindow}
+      <div class="playlist-catalog-grid">${mainCards}</div>
+      ${mainWindow}
+      ${videoWindow}
     </div>
   `;
 }
