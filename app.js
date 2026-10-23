@@ -295,47 +295,17 @@ import { firebaseConfig, adminEmail } from "./firebase-config.js";
   }
 
 function renderPlaylistGroups(videos) {
-  const subjects = new Map();
-
-  videos.forEach((video) => {
-    const subject = String(video.subject || 'Other').trim() || 'Other';
-    const name = String(video.playlist || 'General videos')
-      .trim()
-      .replace(/\s+/g, ' ') || 'General videos';
-
-    const subjectKey = subject.toLocaleLowerCase();
-    const playlistKey = `${subjectKey}::${name.toLocaleLowerCase()}`;
-
-    if (!subjects.has(subjectKey)) {
-      subjects.set(subjectKey, {
-        name: subject,
-        playlists: new Map()
-      });
-    }
-
-    const subjectGroup = subjects.get(subjectKey);
-
-    if (!subjectGroup.playlists.has(playlistKey)) {
-      subjectGroup.playlists.set(playlistKey, {
-        key: playlistKey,
-        name,
-        items: []
-      });
-    }
-
-    subjectGroup.playlists.get(playlistKey).items.push(video);
-  });
+  const groups = new Map();
 
   function videoTime(value) {
     if (typeof value === 'number') return value;
 
     if (typeof value === 'string') {
-      const number = Number(value);
+      const n = Number(value);
+      if (Number.isFinite(n) && n > 0) return n;
 
-      if (Number.isFinite(number) && number > 0) return number;
-
-      const date = Date.parse(value);
-      return Number.isFinite(date) ? date : 0;
+      const parsed = Date.parse(value);
+      return Number.isFinite(parsed) ? parsed : 0;
     }
 
     if (value && typeof value === 'object') {
@@ -351,162 +321,142 @@ function renderPlaylistGroups(videos) {
     return 0;
   }
 
-  const subjectGroups = [...subjects.values()].sort((a, b) => {
-    const ai = SUBJECT_ORDER.indexOf(a.name);
-    const bi = SUBJECT_ORDER.indexOf(b.name);
+  videos.forEach((video) => {
+    const subject = String(video.subject || 'Other').trim() || 'Other';
+    const name = String(video.playlist || 'General videos')
+      .trim()
+      .replace(/\s+/g, ' ') || 'General videos';
 
-    if (ai < 0 && bi < 0) return a.name.localeCompare(b.name);
-    if (ai < 0) return 1;
-    if (bi < 0) return -1;
+    const key =
+      `${subject.toLocaleLowerCase()}::${name.toLocaleLowerCase()}`;
 
-    return ai - bi;
+    if (!groups.has(key)) {
+      groups.set(key, {
+        key,
+        subject,
+        name,
+        items: []
+      });
+    }
+
+    groups.get(key).items.push(video);
   });
 
-  return subjectGroups.map((subjectGroup) => {
-    const playlists = [...subjectGroup.playlists.values()]
-      .map((playlist) => ({
-        ...playlist,
-        items: [...playlist.items].sort(
-          (a, b) => videoTime(b.createdAt) - videoTime(a.createdAt)
-        )
-      }))
-      .sort((a, b) =>
-        videoTime(b.items[0]?.createdAt) -
-        videoTime(a.items[0]?.createdAt)
-      );
+  const playlists = [...groups.values()]
+    .map((group) => ({
+      ...group,
+      items: [...group.items].sort(
+        (a, b) => videoTime(b.createdAt) - videoTime(a.createdAt)
+      )
+    }))
+    .sort((a, b) =>
+      videoTime(b.items[0]?.createdAt) -
+      videoTime(a.items[0]?.createdAt)
+    );
 
-    const playlistCards = playlists.map((playlist) => {
-      const { key, name, items } = playlist;
-      const newestVideo = items[0];
-      const isOpen = openPlaylists.has(key);
+  let activePlaylist = playlists.find(
+    (playlist) => playlist.key === activePlaylistKey
+  );
 
-      return `
-        <article class="playlist-section playlist-catalog-card">
-          <div class="playlist-heading">
-            <div class="playlist-heading-copy">
-             <h3>${safeText(name)}</h3>
-            </div>
+  if (activePlaylistKey && !activePlaylist) {
+    activePlaylistKey = null;
+  }
 
-            ${newestVideo ? `
-              <button
-                class="playlist-preview"
-                data-play="${safeText(newestVideo.id)}"
-                type="button"
-                aria-label="Play latest video"
-              >
-                ${thumbnailMarkup(newestVideo)}
-                <span class="playlist-preview-play">▶</span>
-              </button>
-            ` : ''}
-          </div>
+  const playlistCards = playlists.map((playlist) => {
+    const { key, name, subject, items } = playlist;
+    const newestVideo = items[0];
 
-          <div class="playlist-heading-actions">
-            <span class="playlist-count">
+    return `
+      <article class="playlist-catalog-card">
+
+        <button
+          class="playlist-catalog-preview"
+          data-open-playlist="${safeText(key)}"
+          type="button"
+          aria-label="Open playlist ${safeText(name)}"
+        >
+          ${newestVideo ? thumbnailMarkup(newestVideo) : ''}
+          <span class="playlist-catalog-preview-overlay">
+            View playlist ↗
+          </span>
+        </button>
+
+        <div class="playlist-catalog-info">
+          ${selectedSubject === 'all' ? `
+            <span class="playlist-catalog-subject">
+              ${safeText(subject)}
+            </span>
+          ` : ''}
+
+          <button
+            class="playlist-catalog-title"
+            data-open-playlist="${safeText(key)}"
+            type="button"
+          >${safeText(name)}</button>
+
+          <div class="playlist-catalog-footer">
+            <span>
               ${items.length}
               ${items.length === 1 ? 'video' : 'videos'}
             </span>
 
             <button
               class="playlist-toggle"
-              data-toggle-playlist="${safeText(key)}"
+              data-open-playlist="${safeText(key)}"
               type="button"
-              aria-expanded="${isOpen}"
-            >${isOpen ? 'Hide videos −' : 'View videos +'}</button>
+            >View videos ↗</button>
           </div>
-        </article>
-      `;
-    }).join('');
-
-    const expandedPlaylists = playlists
-      .filter((playlist) => openPlaylists.has(playlist.key))
-      .map((playlist) => {
-        const videoRows = playlist.items.map((video) => {
-          const id = safeText(video.id);
-          const title = safeText(video.title);
-          const subject = safeText(video.subject || 'Other');
-          const teacher = safeText(video.teacher || 'Class resource');
-          const isSaved = saved.has(video.id);
-
-          return `
-            <article class="playlist-video-row">
-              <button
-                class="playlist-video-thumb"
-                data-play="${id}"
-                type="button"
-                aria-label="Play ${title}"
-              >
-                ${thumbnailMarkup(video)}
-                <span class="playlist-video-thumb-overlay">▶</span>
-              </button>
-
-              <div class="playlist-video-main">
-                <button
-                  class="playlist-video-title"
-                  data-play="${id}"
-                  type="button"
-                >${title}</button>
-
-                <div class="playlist-video-meta">
-                  ${subject} · ${teacher}
-                </div>
-
-                <div class="playlist-row-actions">
-                  <button
-                    class="bookmark-button ${isSaved ? 'saved' : ''}"
-                    data-save="${id}"
-                    type="button"
-                    aria-label="${isSaved ? 'Unsave video' : 'Save video'}"
-                  >${isSaved ? '♥' : '♡'}</button>
-
-                  ${isAdmin ? `
-                    <button
-                      class="playlist-remove-button"
-                      data-delete="${id}"
-                      type="button"
-                    >Remove</button>
-                  ` : ''}
-                </div>
-              </div>
-            </article>
-          `;
-        }).join('');
-
-        return `
-          <section class="playlist-expanded-panel">
-            <header class="playlist-expanded-heading">
-              <div>
-                <span class="playlist-eyebrow">
-                  ${safeText(playlist.name)}
-                </span>
-               <h3>${safeText(playlist.name)} Videos</h3>
-              </div>
-
-              <button
-                class="playlist-toggle"
-                data-toggle-playlist="${safeText(playlist.key)}"
-                type="button"
-                aria-expanded="true"
-              >Close −</button>
-            </header>
-
-            <div class="playlist-video-list">
-              ${videoRows}
-            </div>
-          </section>
-        `;
-      }).join('');
-
-    return `
-      <section class="subject-playlists-group">
-       
-        <div class="playlist-catalog-grid">
-          ${playlistCards}
         </div>
 
-        ${expandedPlaylists}
-      </section>
+      </article>
     `;
   }).join('');
+
+  const playlistWindow = activePlaylist ? `
+    <div
+      class="playlist-view-backdrop"
+      data-close-playlist
+    >
+      <section
+        class="playlist-view-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-label="${safeText(activePlaylist.name)}"
+      >
+        <header class="playlist-view-header">
+          <div>
+            <span class="playlist-eyebrow">
+              ${safeText(activePlaylist.subject)}
+            </span>
+            <h2>${safeText(activePlaylist.name)}</h2>
+            <p>${activePlaylist.items.length} videos</p>
+          </div>
+
+          <button
+            class="playlist-view-close"
+            data-close-playlist
+            type="button"
+          >✕ Close</button>
+        </header>
+
+        <div class="playlist-view-grid">
+          ${activePlaylist.items
+            .map((video, index) => renderVideoCard(video, index))
+            .join('')}
+        </div>
+      </section>
+    </div>
+  ` : '';
+
+  return `
+    <div class="playlist-catalog-root">
+      <div class="playlist-catalog-grid">
+        ${playlistCards}
+      </div>
+
+      ${playlistWindow}
+    </div>
+  `;
 }
   function render() {
     const all = getAllVideos();
