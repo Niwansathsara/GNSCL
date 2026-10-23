@@ -1274,3 +1274,68 @@ footer,
     min-width: 0;
   }
 }
+/* FINAL MOBILE SCREEN FIX */
+@media screen and (max-width: 560px) {
+  html,
+  body {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+  }
+
+  body {
+    position: relative !important;
+    left: 0 !important;
+  }
+
+  /* Hide oversized decorative background shapes on phones */
+  .ambient-one,
+  .ambient-two {
+    display: none !important;
+  }
+
+  /* Keep the hero illustration inside the phone screen */
+  .hero,
+  .hero-copy,
+  .hero-visual {
+    min-width: 0 !important;
+    max-width: 100% !important;
+  }
+
+  .hero-visual {
+    width: 100% !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    overflow: hidden !important;
+  }
+
+  .hero-visual::before {
+    max-width: 100% !important;
+  }
+
+  .visual-orbit {
+    max-width: 100% !important;
+  }
+
+  /* Keep the main website sections within the screen */
+  .wrap,
+  .library-section,
+  .subjects-section,
+  .about-section,
+  .site-footer,
+  #videoGrid {
+    max-width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .wrap {
+    width: calc(100% - 32px) !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+
+  .site-header {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+}
