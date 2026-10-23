@@ -448,7 +448,34 @@ function renderPlaylistGroups(videos) {
       </section>
     </div>
   ` : '';
+const subjectWindow = activeSubjectModal ? `
+  <div class="subject-playlists-backdrop" data-close-subject>
+    <section
+      class="subject-playlists-dialog"
+      role="dialog"
+      aria-modal="true"
+      aria-label="${safeText(activeSubjectModal)} playlists"
+    >
+      <header class="subject-playlists-header">
+        <div>
+          <span class="playlist-eyebrow">SUBJECT PLAYLISTS</span>
+          <h2>${safeText(activeSubjectModal)} Playlists</h2>
+          <p>Choose a playlist to view its videos.</p>
+        </div>
 
+        <button
+          class="subject-playlists-close"
+          data-close-subject
+          type="button"
+        >✕ Close</button>
+      </header>
+
+      <div class="playlist-catalog-grid">
+        ${playlistCards}
+      </div>
+    </section>
+  </div>
+` : '';
   return `
     <div class="playlist-catalog-root">
       <div class="playlist-catalog-grid">
