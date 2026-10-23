@@ -741,7 +741,22 @@ if (
   return;
 }
 
-const openPlaylistButton = event.target.closest('[data-open-playlist]');
+const closeSubjectButton = event.target.closest('[data-close-subject]');
+
+if (
+  closeSubjectButton &&
+  (
+    closeSubjectButton.tagName === 'BUTTON' ||
+    event.target === closeSubjectButton
+  )
+) {
+  activeSubjectModal = null;
+  activePlaylistKey = null;
+  selectedSubject = 'all';
+  render();
+  return;
+}
+    const openPlaylistButton = event.target.closest('[data-open-playlist]');
 
 if (openPlaylistButton) {
   activePlaylistKey = openPlaylistButton.dataset.openPlaylist;
