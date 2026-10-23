@@ -1238,3 +1238,39 @@ footer,
   }
 }
 /* Center the mobile hero illustration */
+/* Mobile width correction */
+@media (max-width: 560px) {
+  html,
+  body {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden !important;
+  }
+
+  .wrap,
+  .hero {
+    width: calc(100% - 32px) !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .hero-visual {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    transform: scale(0.74) !important;
+    transform-origin: top center !important;
+  }
+
+  #videoGrid,
+  .playlist-catalog-root,
+  .playlist-catalog-grid,
+  .playlist-view-dialog,
+  .playlist-view-grid {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+}
