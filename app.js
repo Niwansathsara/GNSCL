@@ -799,6 +799,7 @@ if (openLesson) {
     if (playButton) {
       const video = getAllVideos().find((item) => item.id === playButton.dataset.play);
       if (video) {
+  activeMainCategoryKey = null;
   activePlaylistKey = null;
   render();
   openPlayer(video);
