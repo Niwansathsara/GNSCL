@@ -1,6 +1,7 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+
     function isSiteAdmin() {
       return request.auth != null
         && request.auth.token.email_verified == true
@@ -8,23 +9,57 @@ service cloud.firestore {
     }
 
     function validVideo(data, videoId) {
-      return data.keys().hasOnly(['id', 'title', 'subject', 'teacher', 'url', 'description', 'createdAt'])
-        && data.keys().hasAll(['id', 'title', 'subject', 'teacher', 'url', 'description', 'createdAt'])
+      return data.keys().hasOnly([
+          'id',
+          'title',
+          'mainPlaylist',
+          'playlist',
+          'subject',
+          'teacher',
+          'url',
+          'description',
+          'createdAt'
+        ])
+        && data.keys().hasAll([
+          'id',
+          'title',
+          'mainPlaylist',
+          'playlist',
+          'subject',
+          'teacher',
+          'url',
+          'description',
+          'createdAt'
+        ])
         && data.id == videoId
         && data.id is string
-        && data.title is string && data.title.size() > 0 && data.title.size() <= 100
-        && data.subject is string && data.subject.size() > 0 && data.subject.size() <= 40
-        && data.teacher is string && data.teacher.size() <= 80
-        && data.url is string && data.url.size() <= 500
-        && data.description is string && data.description.size() <= 180
+        && data.title is string
+        && data.title.size() > 0
+        && data.title.size() <= 100
+        && data.mainPlaylist is string
+        && data.mainPlaylist.size() > 0
+        && data.mainPlaylist.size() <= 80
+        && data.playlist is string
+        && data.playlist.size() > 0
+        && data.playlist.size() <= 80
+        && data.subject is string
+        && data.subject.size() > 0
+        && data.subject.size() <= 40
+        && data.teacher is string
+        && data.teacher.size() <= 80
+        && data.url is string
+        && data.url.size() <= 500
+        && data.description is string
+        && data.description.size() <= 180
         && data.createdAt is number;
     }
 
     match /videos/{videoId} {
-      // Anyone can view the public class-link library.
       allow read: if true;
-      // Only the verified admin email configured above can publish or remove videos.
-      allow create, update: if isSiteAdmin() && validVideo(request.resource.data, videoId);
+
+      allow create, update: if isSiteAdmin()
+        && validVideo(request.resource.data, videoId);
+
       allow delete: if isSiteAdmin();
     }
   }
