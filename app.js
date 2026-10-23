@@ -383,9 +383,7 @@ function renderPlaylistGroups(videos) {
         <article class="playlist-section playlist-catalog-card">
           <div class="playlist-heading">
             <div class="playlist-heading-copy">
-              <span class="playlist-eyebrow">
-                ${safeText(subjectGroup.name)}
-              </span>
+           
               <h3>${safeText(name)}</h3>
             </div>
 
