@@ -1536,8 +1536,4 @@ footer,
     grid-template-columns: 1fr !important;
   }
 }
-/* Always show the video player above playlist windows */
-#playerModal {
-  position: fixed !important;
-  z-index: 1100 !important;
-}
+
