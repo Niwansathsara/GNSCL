@@ -730,16 +730,14 @@ function renderPlaylistGroups(videos) {
   els.sort.addEventListener('change', render);
   els.favoritesToggle.addEventListener('click', () => { onlySaved = !onlySaved; render(); });
   els.clearFilters.addEventListener('click', clearFilters);
- els.filters.addEventListener('click', (event) => {
+els.filters.addEventListener('click', (event) => {
   const button = event.target.closest('[data-subject]');
   if (!button) return;
 
   selectedSubject = button.dataset.subject;
   onlySaved = false;
+  activeMainCategoryKey = null;
   activePlaylistKey = null;
-
-  activeSubjectModal =
-    selectedSubject === 'all' ? null : selectedSubject;
 
   render();
 });
