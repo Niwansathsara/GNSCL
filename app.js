@@ -742,39 +742,42 @@ els.filters.addEventListener('click', (event) => {
   render();
 });
   els.videoGrid.addEventListener('click', (event) => {
-   const closePlaylistButton = event.target.closest('[data-close-playlist]');
+  const closeMain = event.target.closest('[data-close-main-category]');
 
-if (
-  closePlaylistButton &&
-  (
-    closePlaylistButton.tagName === 'BUTTON' ||
-    event.target === closePlaylistButton
-  )
-) {
+if (closeMain && (
+  closeMain.tagName === 'BUTTON' ||
+  event.target === closeMain
+)) {
+  activeMainCategoryKey = null;
   activePlaylistKey = null;
   render();
   return;
 }
 
-const closeSubjectButton = event.target.closest('[data-close-subject]');
+const openMain = event.target.closest('[data-open-main-category]');
 
-if (
-  closeSubjectButton &&
-  (
-    closeSubjectButton.tagName === 'BUTTON' ||
-    event.target === closeSubjectButton
-  )
-) {
-  activeSubjectModal = null;
+if (openMain) {
+  activeMainCategoryKey = openMain.dataset.openMainCategory;
   activePlaylistKey = null;
-  selectedSubject = 'all';
   render();
   return;
 }
-    const openPlaylistButton = event.target.closest('[data-open-playlist]');
 
-if (openPlaylistButton) {
-  activePlaylistKey = openPlaylistButton.dataset.openPlaylist;
+const closeLesson = event.target.closest('[data-close-lesson-playlist]');
+
+if (closeLesson && (
+  closeLesson.tagName === 'BUTTON' ||
+  event.target === closeLesson
+)) {
+  activePlaylistKey = null;
+  render();
+  return;
+}
+
+const openLesson = event.target.closest('[data-open-lesson-playlist]');
+
+if (openLesson) {
+  activePlaylistKey = openLesson.dataset.openLessonPlaylist;
   render();
   return;
 }
