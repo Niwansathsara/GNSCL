@@ -500,11 +500,7 @@ function renderPlaylistGroups(videos) {
 
     return `
       <section class="subject-playlists-group">
-        <header class="subject-playlists-heading">
-          <span class="playlist-eyebrow">SUBJECT</span>
-          <h2>${safeText(subjectGroup.name)}</h2>
-        </header>
-
+       
         <div class="playlist-catalog-grid">
           ${playlistCards}
         </div>
