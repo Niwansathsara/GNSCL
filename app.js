@@ -476,15 +476,19 @@ const subjectWindow = activeSubjectModal ? `
     </section>
   </div>
 ` : '';
-  return `
-    <div class="playlist-catalog-root">
-      <div class="playlist-catalog-grid">
-        ${playlistCards}
-      </div>
+ const catalogContent = activeSubjectModal ? '' : `
+  <div class="playlist-catalog-grid">
+    ${playlistCards}
+  </div>
+`;
 
-      ${playlistWindow}
-    </div>
-  `;
+return `
+  <div class="playlist-catalog-root">
+    ${catalogContent}
+    ${subjectWindow}
+    ${playlistWindow}
+  </div>
+`;
 }
   function render() {
     const all = getAllVideos();
@@ -709,13 +713,19 @@ const subjectWindow = activeSubjectModal ? `
   els.sort.addEventListener('change', render);
   els.favoritesToggle.addEventListener('click', () => { onlySaved = !onlySaved; render(); });
   els.clearFilters.addEventListener('click', clearFilters);
-  els.filters.addEventListener('click', (event) => {
-    const button = event.target.closest('[data-subject]');
-    if (!button) return;
-    selectedSubject = button.dataset.subject;
-    onlySaved = false;
-    render();
-  });
+ els.filters.addEventListener('click', (event) => {
+  const button = event.target.closest('[data-subject]');
+  if (!button) return;
+
+  selectedSubject = button.dataset.subject;
+  onlySaved = false;
+  activePlaylistKey = null;
+
+  activeSubjectModal =
+    selectedSubject === 'all' ? null : selectedSubject;
+
+  render();
+});
   els.videoGrid.addEventListener('click', (event) => {
    const closePlaylistButton = event.target.closest('[data-close-playlist]');
 
