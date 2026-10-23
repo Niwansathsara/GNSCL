@@ -1541,7 +1541,6 @@ footer,
 #playerModal[popover="manual"] {
   position: fixed !important;
   inset: 0 !important;
-  display: grid !important;
   place-items: center !important;
   margin: 0 !important;
   width: 100vw !important;
