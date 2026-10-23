@@ -296,7 +296,7 @@ import { firebaseConfig, adminEmail } from "./firebase-config.js";
   }
 
 function renderPlaylistGroups(videos) {
-  const groups = new Map();
+  const categoryMap = new Map();
 
   function videoTime(value) {
     if (typeof value === 'number') return value;
@@ -323,101 +323,209 @@ function renderPlaylistGroups(videos) {
   }
 
   videos.forEach((video) => {
-    const subject = String(video.subject || 'Other').trim() || 'Other';
-    const name = String(video.playlist || 'General videos')
-      .trim()
-      .replace(/\s+/g, ' ') || 'General videos';
+    const subject =
+      String(video.subject || 'Other').trim() || 'Other';
 
-    const key =
-      `${subject.toLocaleLowerCase()}::${name.toLocaleLowerCase()}`;
+    const mainPlaylist =
+      String(video.mainPlaylist || 'General').trim() || 'General';
 
-    if (!groups.has(key)) {
-      groups.set(key, {
-        key,
+    const name =
+      String(video.playlist || 'General videos')
+        .trim()
+        .replace(/\s+/g, ' ') || 'General videos';
+
+    const categoryKey =
+      `${subject.toLocaleLowerCase()}::${mainPlaylist.toLocaleLowerCase()}`;
+
+    const playlistKey =
+      `${categoryKey}::${name.toLocaleLowerCase()}`;
+
+    if (!categoryMap.has(categoryKey)) {
+      categoryMap.set(categoryKey, {
+        key: categoryKey,
         subject,
+        name: mainPlaylist,
+        playlists: new Map()
+      });
+    }
+
+    const category = categoryMap.get(categoryKey);
+
+    if (!category.playlists.has(playlistKey)) {
+      category.playlists.set(playlistKey, {
+        key: playlistKey,
+        subject,
+        mainPlaylist,
         name,
         items: []
       });
     }
 
-    groups.get(key).items.push(video);
+    category.playlists.get(playlistKey).items.push(video);
   });
 
-  const playlists = [...groups.values()]
-    .map((group) => ({
-      ...group,
-      items: [...group.items].sort(
-        (a, b) => videoTime(b.createdAt) - videoTime(a.createdAt)
-      )
-    }))
-    .sort((a, b) =>
-      videoTime(b.items[0]?.createdAt) -
-      videoTime(a.items[0]?.createdAt)
-    );
+  const categories = [...categoryMap.values()].map((category) => {
+    const playlists = [...category.playlists.values()]
+      .map((playlist) => ({
+        ...playlist,
+        items: [...playlist.items].sort(
+          (a, b) => videoTime(b.createdAt) - videoTime(a.createdAt)
+        )
+      }))
+      .sort(
+        (a, b) =>
+          videoTime(b.items[0]?.createdAt) -
+          videoTime(a.items[0]?.createdAt)
+      );
 
-  let activePlaylist = playlists.find(
+    return { ...category, playlists };
+  });
+
+  let activeCategory = categories.find(
+    (category) => category.key === activeMainCategoryKey
+  );
+
+  if (activeMainCategoryKey && !activeCategory) {
+    activeMainCategoryKey = null;
+    activeCategory = null;
+  }
+
+  const allPlaylists = categories.flatMap(
+    (category) => category.playlists
+  );
+
+  let activePlaylist = allPlaylists.find(
     (playlist) => playlist.key === activePlaylistKey
   );
 
   if (activePlaylistKey && !activePlaylist) {
     activePlaylistKey = null;
+    activePlaylist = null;
   }
 
-  const playlistCards = playlists.map((playlist) => {
-    const { key, name, subject, items } = playlist;
-    const newestVideo = items[0];
+  const mainCards = categories.map((category) => {
+    const allItems = category.playlists.flatMap(
+      (playlist) => playlist.items
+    );
+
+    allItems.sort(
+      (a, b) => videoTime(b.createdAt) - videoTime(a.createdAt)
+    );
+
+    const newestVideo = allItems[0];
+
+    const title = selectedSubject === 'all'
+      ? `${category.subject} · ${category.name}`
+      : category.name;
 
     return `
       <article class="playlist-catalog-card">
-
         <button
           class="playlist-catalog-preview"
-          data-open-playlist="${safeText(key)}"
+          data-open-main-category="${safeText(category.key)}"
           type="button"
-          aria-label="Open playlist ${safeText(name)}"
+          aria-label="Open ${safeText(title)}"
         >
           ${newestVideo ? thumbnailMarkup(newestVideo) : ''}
           <span class="playlist-catalog-preview-overlay">
-            View playlist ↗
+            View playlists ↗
           </span>
         </button>
 
         <div class="playlist-catalog-info">
-          ${selectedSubject === 'all' ? `
-            <span class="playlist-catalog-subject">
-              ${safeText(subject)}
-            </span>
-          ` : ''}
-
           <button
             class="playlist-catalog-title"
-            data-open-playlist="${safeText(key)}"
+            data-open-main-category="${safeText(category.key)}"
             type="button"
-          >${safeText(name)}</button>
+          >${safeText(title)}</button>
 
           <div class="playlist-catalog-footer">
-            <span>
-              ${items.length}
-              ${items.length === 1 ? 'video' : 'videos'}
-            </span>
-
+            <span>${category.playlists.length} playlists</span>
             <button
               class="playlist-toggle"
-              data-open-playlist="${safeText(key)}"
+              data-open-main-category="${safeText(category.key)}"
               type="button"
-            >View videos ↗</button>
+            >View playlists ↗</button>
           </div>
         </div>
-
       </article>
     `;
   }).join('');
 
+  const lessonCards = activeCategory
+    ? activeCategory.playlists.map((playlist) => {
+        const newestVideo = playlist.items[0];
+
+        return `
+          <article class="playlist-catalog-card">
+            <button
+              class="playlist-catalog-preview"
+              data-open-playlist="${safeText(playlist.key)}"
+              type="button"
+              aria-label="Open ${safeText(playlist.name)}"
+            >
+              ${newestVideo ? thumbnailMarkup(newestVideo) : ''}
+              <span class="playlist-catalog-preview-overlay">
+                View videos ↗
+              </span>
+            </button>
+
+            <div class="playlist-catalog-info">
+              <button
+                class="playlist-catalog-title"
+                data-open-playlist="${safeText(playlist.key)}"
+                type="button"
+              >${safeText(playlist.name)}</button>
+
+              <div class="playlist-catalog-footer">
+                <span>
+                  ${playlist.items.length}
+                  ${playlist.items.length === 1 ? 'video' : 'videos'}
+                </span>
+
+                <button
+                  class="playlist-toggle"
+                  data-open-playlist="${safeText(playlist.key)}"
+                  type="button"
+                >View videos ↗</button>
+              </div>
+            </div>
+          </article>
+        `;
+      }).join('')
+    : '';
+
+  const categoryWindow = activeCategory ? `
+    <div class="subject-playlists-backdrop" data-close-main-category>
+      <section
+        class="subject-playlists-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-label="${safeText(activeCategory.name)} playlists"
+      >
+        <header class="subject-playlists-header">
+          <div>
+            <span class="playlist-eyebrow">MAIN PLAYLIST</span>
+            <h2>${safeText(activeCategory.name)}</h2>
+            <p>Select a lesson playlist to see its videos.</p>
+          </div>
+
+          <button
+            class="subject-playlists-close"
+            data-close-main-category
+            type="button"
+          >✕ Close</button>
+        </header>
+
+        <div class="playlist-catalog-grid">
+          ${lessonCards}
+        </div>
+      </section>
+    </div>
+  ` : '';
+
   const playlistWindow = activePlaylist ? `
-    <div
-      class="playlist-view-backdrop"
-      data-close-playlist
-    >
+    <div class="playlist-view-backdrop" data-close-playlist>
       <section
         class="playlist-view-dialog"
         role="dialog"
@@ -448,47 +556,17 @@ function renderPlaylistGroups(videos) {
       </section>
     </div>
   ` : '';
-const subjectWindow = activeSubjectModal ? `
-  <div class="subject-playlists-backdrop" data-close-subject>
-    <section
-      class="subject-playlists-dialog"
-      role="dialog"
-      aria-modal="true"
-      aria-label="${safeText(activeSubjectModal)} playlists"
-    >
-      <header class="subject-playlists-header">
-        <div>
-          <span class="playlist-eyebrow">SUBJECT PLAYLISTS</span>
-          <h2>${safeText(activeSubjectModal)} Playlists</h2>
-          <p>Choose a playlist to view its videos.</p>
-        </div>
 
-        <button
-          class="subject-playlists-close"
-          data-close-subject
-          type="button"
-        >✕ Close</button>
-      </header>
-
+  return `
+    <div class="playlist-catalog-root">
       <div class="playlist-catalog-grid">
-        ${playlistCards}
+        ${mainCards}
       </div>
-    </section>
-  </div>
-` : '';
- const catalogContent = activeSubjectModal ? '' : `
-  <div class="playlist-catalog-grid">
-    ${playlistCards}
-  </div>
-`;
 
-return `
-  <div class="playlist-catalog-root">
-    ${catalogContent}
-    ${subjectWindow}
-    ${playlistWindow}
-  </div>
-`;
+      ${categoryWindow}
+      ${playlistWindow}
+    </div>
+  `;
 }
   function render() {
     const all = getAllVideos();
