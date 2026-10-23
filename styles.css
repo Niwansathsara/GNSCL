@@ -717,3 +717,226 @@ button.playlist-video-title {
     grid-template-columns: 1fr !important;
   }
 }
+/* Subject sections */
+.subject-playlists-group {
+  width: 100%;
+  min-width: 0;
+  margin-bottom: 32px;
+}
+
+.subject-playlists-heading {
+  margin-bottom: 16px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(128, 128, 128, 0.22);
+}
+
+.subject-playlists-heading h2 {
+  margin: 5px 0 0;
+  font-size: 1.65rem;
+  font-weight: 800;
+}
+
+/* Main playlist titles: three cards per row */
+.playlist-catalog-grid {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 18px !important;
+  width: 100%;
+  min-width: 0;
+}
+
+.playlist-catalog-grid > .playlist-catalog-card {
+  box-sizing: border-box;
+  width: auto !important;
+  min-width: 0;
+  margin: 0 !important;
+  padding: 15px !important;
+  border: 1px solid rgba(128, 128, 128, 0.23);
+  border-radius: 15px;
+  overflow: hidden;
+}
+
+.playlist-catalog-card .playlist-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  min-width: 0;
+}
+
+.playlist-catalog-card .playlist-heading-copy {
+  flex: 1;
+  min-width: 0;
+}
+
+.playlist-catalog-card .playlist-heading-copy h3 {
+  margin-top: 5px;
+  overflow-wrap: anywhere;
+  font-size: 1rem;
+}
+
+.playlist-catalog-card .playlist-preview {
+  flex: 0 0 82px !important;
+  width: 82px !important;
+  min-width: 82px !important;
+  max-width: 82px !important;
+  height: 52px !important;
+  min-height: 52px !important;
+  max-height: 52px !important;
+  margin: 0 !important;
+  overflow: hidden;
+  border-radius: 9px;
+}
+
+.playlist-catalog-card .playlist-preview img,
+.playlist-catalog-card .playlist-preview .thumb-subject-art {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.playlist-catalog-card .playlist-heading-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+/* Opened playlist: show its videos in a full-width panel */
+.playlist-expanded-panel {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  margin-top: 20px;
+  padding: 18px;
+  border: 1px solid rgba(128, 128, 128, 0.23);
+  border-radius: 16px;
+}
+
+.playlist-expanded-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.playlist-expanded-heading h3 {
+  margin: 5px 0 0;
+  overflow-wrap: anywhere;
+}
+
+/* Keep four video thumbnails per row inside the opened playlist */
+.playlist-expanded-panel .playlist-video-list {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 16px !important;
+  width: 100%;
+  min-width: 0;
+}
+
+.playlist-expanded-panel .playlist-video-row {
+  display: flex !important;
+  flex-direction: column !important;
+  min-width: 0;
+  overflow: hidden;
+  padding: 0 !important;
+  border: 1px solid rgba(128, 128, 128, 0.23);
+  border-radius: 13px;
+}
+
+.playlist-expanded-panel .playlist-video-thumb {
+  position: relative;
+  display: block;
+  width: 100%;
+  min-width: 0;
+  aspect-ratio: 16 / 9;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  cursor: pointer;
+}
+
+.playlist-expanded-panel .playlist-video-thumb img,
+.playlist-expanded-panel .playlist-video-thumb .thumb-subject-art {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.playlist-expanded-panel .playlist-video-thumb-overlay {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: white;
+  font-size: 25px;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.playlist-expanded-panel .playlist-video-main {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 9px;
+  min-width: 0;
+  padding: 12px;
+}
+
+.playlist-expanded-panel .playlist-video-title {
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+
+.playlist-expanded-panel .playlist-video-meta {
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.playlist-expanded-panel .playlist-row-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: auto;
+}
+
+/* Responsive layout */
+@media (max-width: 950px) {
+  .playlist-catalog-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .playlist-expanded-panel .playlist-video-list {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 600px) {
+  .playlist-catalog-grid {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  .playlist-expanded-panel {
+    padding: 12px;
+  }
+
+  .playlist-expanded-panel .playlist-video-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+  }
+}
+
+@media (max-width: 380px) {
+  .playlist-expanded-panel .playlist-video-list {
+    grid-template-columns: 1fr !important;
+  }
+}
