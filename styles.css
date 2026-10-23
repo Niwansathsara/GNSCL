@@ -1237,3 +1237,14 @@ footer,
     grid-template-columns: minmax(0, 1fr) !important;
   }
 }
+/* Center the mobile hero illustration */
+@media (max-width: 560px) {
+  .hero-visual {
+    width: 136% !important;
+    max-width: none !important;
+    margin-left: -18% !important;
+    margin-right: 0 !important;
+    transform: scale(0.74) !important;
+    transform-origin: top center !important;
+  }
+}
