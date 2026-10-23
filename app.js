@@ -68,6 +68,7 @@ import { firebaseConfig, adminEmail } from "./firebase-config.js";
   if (!Array.isArray(localVideos)) localVideos = [];
   let saved = new Set(readJSON(SAVED_STORAGE, []));
   const openPlaylists = new Set();
+  let activePlaylistKey = null;
   let selectedSubject = 'all';
   let onlySaved = false;
   let toastTimer;
