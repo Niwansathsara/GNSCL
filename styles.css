@@ -1339,3 +1339,91 @@ footer,
     max-width: 100% !important;
   }
 }
+/* Subject playlists window */
+.subject-playlists-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  overflow-y: auto;
+  background: rgba(17, 27, 51, 0.68);
+  backdrop-filter: blur(7px);
+}
+
+.subject-playlists-dialog {
+  width: min(1100px, 100%);
+  max-height: 92vh;
+  overflow-y: auto;
+  padding: 24px;
+  border: 1px solid #e5e9f8;
+  border-radius: 20px;
+  background: #fbfcff;
+  box-shadow: 0 25px 80px rgba(20, 34, 70, 0.28);
+}
+
+.subject-playlists-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 22px;
+}
+
+.subject-playlists-header h2 {
+  margin: 6px 0;
+  font-size: clamp(22px, 3vw, 30px);
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.subject-playlists-header p {
+  margin: 5px 0 0;
+  color: #74819a;
+  font-size: 13px;
+}
+
+.subject-playlists-close {
+  flex-shrink: 0;
+  padding: 9px 13px;
+  border: 1px solid #dfe5f2;
+  border-radius: 10px;
+  background: white;
+  color: #34415e;
+  cursor: pointer;
+}
+
+/* Keep the video window above the subject window */
+.playlist-view-backdrop {
+  z-index: 950 !important;
+}
+
+@media (max-width: 650px) {
+  .subject-playlists-backdrop {
+    padding: 8px;
+    align-items: flex-start;
+  }
+
+  .subject-playlists-dialog {
+    width: 100%;
+    max-height: calc(100dvh - 16px);
+    padding: 14px;
+    border-radius: 15px;
+  }
+
+  .subject-playlists-header {
+    gap: 10px;
+    margin-bottom: 15px;
+  }
+
+  .subject-playlists-header h2 {
+    font-size: 21px;
+  }
+
+  .subject-playlists-dialog .playlist-catalog-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+  }
+}
