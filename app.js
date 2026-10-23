@@ -583,6 +583,13 @@ function renderPlaylistGroups(videos) {
     document.getElementById('playerDescription').textContent = video.description || '';
     document.getElementById('openYoutubeLink').href = video.url;
     els.videoFrame.src = `https://www.youtube-nocookie.com/embed/${encodeURIComponent(videoId)}?autoplay=1&rel=0`;
+    if (els.playerModal.parentElement !== document.body) {
+  document.body.appendChild(els.playerModal);
+}
+
+els.playerModal.style.setProperty('position', 'fixed', 'important');
+els.playerModal.style.setProperty('z-index', '99999', 'important');
+    
     els.playerModal.classList.remove('hidden');
     document.body.style.overflow = 'hidden';
     els.playerModal.querySelector('.modal-close').focus();
