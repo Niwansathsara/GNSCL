@@ -689,17 +689,24 @@ function renderPlaylistGroups(videos) {
     render();
   });
   els.videoGrid.addEventListener('click', (event) => {
-    const playlistButton = event.target.closest('[data-toggle-playlist]');
+   const closePlaylistButton = event.target.closest('[data-close-playlist]');
 
-if (playlistButton) {
-  const key = playlistButton.dataset.togglePlaylist;
+if (
+  closePlaylistButton &&
+  (
+    closePlaylistButton.tagName === 'BUTTON' ||
+    event.target === closePlaylistButton
+  )
+) {
+  activePlaylistKey = null;
+  render();
+  return;
+}
 
-  if (openPlaylists.has(key)) {
-    openPlaylists.delete(key);
-  } else {
-    openPlaylists.add(key);
-  }
+const openPlaylistButton = event.target.closest('[data-open-playlist]');
 
+if (openPlaylistButton) {
+  activePlaylistKey = openPlaylistButton.dataset.openPlaylist;
   render();
   return;
 }
