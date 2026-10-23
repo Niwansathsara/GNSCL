@@ -1536,22 +1536,3 @@ footer,
     grid-template-columns: 1fr !important;
   }
 }
-/* Keep the video player above playlist windows */
-#playerModal[popover="manual"] {
-  position: fixed !important;
-  inset: 0 !important;
-  margin: 0 !important;
-  width: 100vw !important;
-  height: 100vh !important;
-  max-width: none !important;
-  max-height: none !important;
-  border: 0 !important;
-  padding: 20px !important;
-  overflow-y: auto !important;
-}
-
-@media (max-width: 560px) {
-  #playerModal[popover="manual"] {
-    padding: 12px !important;
-  }
-}
