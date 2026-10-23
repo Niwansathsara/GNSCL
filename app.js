@@ -573,28 +573,47 @@ function renderPlaylistGroups(videos) {
     if (lastFocus && typeof lastFocus.focus === 'function') lastFocus.focus();
   }
 
-  function openPlayer(video) {
-    const videoId = getYoutubeId(video.url);
-    if (!videoId) { window.open(video.url, '_blank', 'noopener,noreferrer'); return; }
-    lastFocus = document.activeElement;
-    document.getElementById('playerTitle').textContent = video.title;
-    document.getElementById('playerSubject').textContent = video.subject.toUpperCase();
-    document.getElementById('playerTeacher').textContent = video.teacher || 'GNS Class Library';
-    document.getElementById('playerDescription').textContent = video.description || '';
-    document.getElementById('openYoutubeLink').href = video.url;
-    els.videoFrame.src = `https://www.youtube-nocookie.com/embed/${encodeURIComponent(videoId)}?autoplay=1&rel=0`;
-    if (els.playerModal.parentElement !== document.body) {
-  document.body.appendChild(els.playerModal);
-}
+ function openPlayer(video) {
+  const videoId = getYoutubeId(video.url);
 
-els.playerModal.style.setProperty('position', 'fixed', 'important');
-els.playerModal.style.setProperty('inset', '0', 'important');
-els.playerModal.style.setProperty('z-index', '2147483647', 'important');
-    
-    els.playerModal.classList.remove('hidden');
-    document.body.style.overflow = 'hidden';
-    els.playerModal.querySelector('.modal-close').focus();
+  if (!videoId) {
+    window.open(video.url, '_blank', 'noopener,noreferrer');
+    return;
   }
+
+  lastFocus = document.activeElement;
+
+  document.getElementById('playerTitle').textContent = video.title;
+  document.getElementById('playerSubject').textContent =
+    video.subject.toUpperCase();
+  document.getElementById('playerTeacher').textContent =
+    video.teacher || 'GNS Class Library';
+  document.getElementById('playerDescription').textContent =
+    video.description || '';
+  document.getElementById('openYoutubeLink').href = video.url;
+
+  // Move the player outside all playlist windows.
+  if (els.playerModal.parentElement !== document.body) {
+    document.body.appendChild(els.playerModal);
+  }
+
+  // Keep the video player above every playlist window.
+  els.playerModal.style.setProperty('position', 'fixed', 'important');
+  els.playerModal.style.setProperty('inset', '0', 'important');
+  els.playerModal.style.setProperty(
+    'z-index',
+    '2147483647',
+    'important'
+  );
+
+  els.videoFrame.src =
+    `https://www.youtube-nocookie.com/embed/${encodeURIComponent(videoId)}?autoplay=1&rel=0`;
+
+  els.playerModal.classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+
+  els.playerModal.querySelector('.modal-close').focus();
+}
 
   function closePlayer() {
     els.videoFrame.src = '';
