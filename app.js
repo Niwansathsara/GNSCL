@@ -727,7 +727,11 @@ if (openPlaylistButton) {
     const playButton = event.target.closest('[data-play]');
     if (playButton) {
       const video = getAllVideos().find((item) => item.id === playButton.dataset.play);
-      if (video) openPlayer(video);
+      if (video) {
+  activePlaylistKey = null;
+  render();
+  openPlayer(video);
+}
     }
   });
   document.querySelectorAll('[data-quick-subject]').forEach((button) => button.addEventListener('click', () => {
