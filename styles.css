@@ -1955,21 +1955,21 @@ body[data-active-page="library"] #library { min-height: 60vh; }
 /* GNS Hero text animations */
 .hero-copy .eyebrow {
   opacity: 0;
-  animation: gnsEyebrowEnter 0.8s ease-out 0.15s forwards;
+  animation: gnsEyebrowEnter 1.1s ease-out 0.15s forwards;
 }
 
 .hero-copy #hero-title {
   opacity: 0;
-  animation: gnsTitleEnter 1s cubic-bezier(.2, .75, .25, 1) 0.3s forwards;
+  animation: gnsTitleEnter 1.4s cubic-bezier(.2, .75, .25, 1) 0.3s forwards;
 }
 
 .hero-copy .eyebrow-dot {
-  animation: gnsDotPulse 2s ease-in-out 1s infinite;
+  animation: gnsDotPulse 3s ease-in-out 1s infinite;
 }
 
 .hero-copy #hero-title span {
   background-size: 200% auto;
-  animation: gnsGradientFlow 4s ease-in-out 1.4s infinite alternate;
+  animation: gnsGradientFlow 6s ease-in-out 1.4s infinite alternate;
 }
 
 @keyframes gnsEyebrowEnter {
