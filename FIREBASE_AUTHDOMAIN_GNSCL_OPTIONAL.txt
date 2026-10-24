@@ -1,0 +1,8 @@
+OPTIONAL — USE ONLY AFTER Firebase Hosting successfully creates a secondary site with site ID `gnscl` and `https://gnscl.firebaseapp.com` is active.
+
+In firebase-config.js, replace only:
+  authDomain: "gnscl-1291a.firebaseapp.com",
+with:
+  authDomain: "gnscl.firebaseapp.com",
+
+Then add `gnscl.firebaseapp.com` to Firebase Authentication → Settings → Authorized domains and ensure the Google sign-in OAuth redirect setup is correct. If the `gnscl` site ID is unavailable or has not been created, DO NOT make this change; keep the current working authDomain.

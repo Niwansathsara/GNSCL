@@ -9,7 +9,7 @@ import {
   signInWithEmailAndPassword,
   sendPasswordResetEmail
 } from 'https://www.gstatic.com/firebasejs/13.0.0/firebase-auth.js';
-import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot, writeBatch } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-firestore.js";
+import { getFirestore, collection, doc, getDoc, setDoc, deleteDoc, onSnapshot, writeBatch, serverTimestamp } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-firestore.js";
 import { firebaseConfig, adminEmail } from "./firebase-config.js";
 
 (() => {
@@ -57,6 +57,9 @@ import { firebaseConfig, adminEmail } from "./firebase-config.js";
     statVideos: document.getElementById('statVideos'),
     statSubjects: document.getElementById('statSubjects'),
     statSaved: document.getElementById('statSaved'),
+    statOnline: document.getElementById('statOnline'),
+    statRegistered: document.getElementById('statRegistered'),
+    memberStatsNoteText: document.getElementById('memberStatsNoteText'),
     addModal: document.getElementById('addModal'),
     addForm: document.getElementById('addVideoForm'),
     formError: document.getElementById('formError'),
@@ -78,6 +81,17 @@ import { firebaseConfig, adminEmail } from "./firebase-config.js";
   let currentUser = null;
   let isAdmin = false;
   let firestoreUnsubscribe = null;
+  let publicLibraryStatsUnsubscribe = null;
+  let publicLibraryStats = null;
+  let hasLoadedSharedVideos = false;
+  let registeredUsersUnsubscribe = null;
+  let presenceUnsubscribe = null;
+  let presenceHeartbeatTimer = null;
+  let presenceRefreshTimer = null;
+  let memberStatsUid = null;
+  let registeredAccountsCount = null;
+  let presenceRecords = [];
+  const PRESENCE_ACTIVE_WINDOW_MS = 90 * 1000;
   let localVideos = readJSON(VIDEO_STORAGE, []);
   if (!Array.isArray(localVideos)) localVideos = [];
   let saved = new Set(readJSON(SAVED_STORAGE, []));
@@ -137,11 +151,50 @@ import { firebaseConfig, adminEmail } from "./firebase-config.js";
     render();
   }
 
+  function startPublicLibraryStatsListener() {
+    if (!db || publicLibraryStatsUnsubscribe) return;
+    // Only this aggregate document is publicly readable; it contains counts, not video records or emails.
+    publicLibraryStatsUnsubscribe = onSnapshot(doc(db, 'publicStats', 'library'), (snapshot) => {
+      publicLibraryStats = snapshot.exists() ? snapshot.data() : null;
+      render();
+    }, (error) => {
+      console.error('Public library summary could not load:', error);
+      publicLibraryStats = null;
+      render();
+    });
+  }
+
+  async function publishPublicLibraryStats(videos = sharedVideos) {
+    if (!db || !isAdmin) return;
+    const subjects = new Set(
+      videos.map((video) => String(video.subject || 'Other').trim()).filter(Boolean)
+    );
+    try {
+      // Publish counts only. Never place titles, URLs, account IDs, or email addresses in this public document.
+      await setDoc(doc(db, 'publicStats', 'library'), {
+        videoCount: videos.length,
+        subjectCount: subjects.size,
+        updatedAt: serverTimestamp()
+      });
+    } catch (error) {
+      console.error('Could not update public library counters:', error);
+    }
+  }
+
   function startFirestoreListener() {
-    if (!db || !currentUser || firestoreUnsubscribe) return;
+    if (!db || !currentUser) return;
+    if (firestoreUnsubscribe) {
+      if (isAdmin && hasLoadedSharedVideos) {
+        publishPublicLibraryStats(sharedVideos);
+      }
+      return;
+    }
     firestoreUnsubscribe = onSnapshot(collection(db, 'videos'), (snapshot) => {
       sharedVideos = snapshot.docs.map((item) => normalizeVideo({ ...item.data(), id: item.id })).filter(Boolean);
+      hasLoadedSharedVideos = true;
       render();
+      // An authorised Admin's first load also seeds the public summary with the existing real counts.
+      if (isAdmin) publishPublicLibraryStats(sharedVideos);
     }, (error) => {
       console.error('Firestore read failed:', error);
       notify('Could not load the shared library. Check Firebase Firestore rules and setup.');
@@ -154,7 +207,134 @@ import { firebaseConfig, adminEmail } from "./firebase-config.js";
       firestoreUnsubscribe = null;
     }
     sharedVideos = [];
+    hasLoadedSharedVideos = false;
   }
+
+  function updateMemberStats() {
+    if (!els.statOnline || !els.statRegistered || !els.memberStatsNoteText) return;
+
+    if (!currentUser || !db) {
+      els.statOnline.textContent = '—';
+      els.statRegistered.textContent = '—';
+      els.memberStatsNoteText.textContent = 'Sign in to view live member counts.';
+      return;
+    }
+
+    const cutoff = Date.now() - PRESENCE_ACTIVE_WINDOW_MS;
+    const activeUserIds = new Set();
+    presenceRecords.forEach((record) => {
+      const lastSeenMillis = record.lastSeen && typeof record.lastSeen.toMillis === 'function'
+        ? record.lastSeen.toMillis()
+        : 0;
+      if (lastSeenMillis >= cutoff) activeUserIds.add(record.uid);
+    });
+
+    els.statOnline.textContent = String(activeUserIds.size);
+    els.statRegistered.textContent = registeredAccountsCount === null
+      ? '…'
+      : String(registeredAccountsCount);
+    els.memberStatsNoteText.textContent = 'Live count updates while signed-in members use the website.';
+  }
+
+  async function writePresenceHeartbeat(userId) {
+    if (!db || !userId || !currentUser || currentUser.uid !== userId) return;
+    if (document.visibilityState !== 'visible') return;
+    await setDoc(doc(db, 'sitePresence', userId), {
+      lastSeen: serverTimestamp()
+    }, { merge: true });
+  }
+
+  function stopMemberStats() {
+    if (registeredUsersUnsubscribe) {
+      registeredUsersUnsubscribe();
+      registeredUsersUnsubscribe = null;
+    }
+    if (presenceUnsubscribe) {
+      presenceUnsubscribe();
+      presenceUnsubscribe = null;
+    }
+    if (presenceHeartbeatTimer) {
+      clearInterval(presenceHeartbeatTimer);
+      presenceHeartbeatTimer = null;
+    }
+    if (presenceRefreshTimer) {
+      clearInterval(presenceRefreshTimer);
+      presenceRefreshTimer = null;
+    }
+    memberStatsUid = null;
+    registeredAccountsCount = null;
+    presenceRecords = [];
+    updateMemberStats();
+  }
+
+  async function startMemberStats(user) {
+    if (!db || !user) return;
+    if (memberStatsUid === user.uid) {
+      writePresenceHeartbeat(user.uid).catch((error) => {
+        console.warn('Could not refresh online presence:', error);
+      });
+      return;
+    }
+
+    stopMemberStats();
+    memberStatsUid = user.uid;
+    registeredAccountsCount = null;
+    updateMemberStats();
+
+    try {
+      // Store only the Firebase UID as the document ID and a timestamp. No email is copied into Firestore.
+      const userRecordRef = doc(db, 'libraryUsers', user.uid);
+      const userRecord = await getDoc(userRecordRef);
+      if (!userRecord.exists()) {
+        await setDoc(userRecordRef, { createdAt: serverTimestamp() });
+      }
+      await writePresenceHeartbeat(user.uid);
+    } catch (error) {
+      console.error('Could not initialise member counters:', error);
+      els.memberStatsNoteText.textContent = 'Member counts could not load. Check Firestore Rules and try again.';
+    }
+
+    if (memberStatsUid !== user.uid || !currentUser || currentUser.uid !== user.uid) return;
+
+    registeredUsersUnsubscribe = onSnapshot(collection(db, 'libraryUsers'), (snapshot) => {
+      registeredAccountsCount = snapshot.size;
+      updateMemberStats();
+    }, (error) => {
+      console.error('Registered-account counter failed:', error);
+      els.memberStatsNoteText.textContent = 'Registered count unavailable. Check Firestore Rules.';
+    });
+
+    presenceUnsubscribe = onSnapshot(collection(db, 'sitePresence'), (snapshot) => {
+      presenceRecords = snapshot.docs.map((item) => ({
+        uid: item.id,
+        lastSeen: item.data().lastSeen || null
+      }));
+      updateMemberStats();
+    }, (error) => {
+      console.error('Online-presence counter failed:', error);
+      els.memberStatsNoteText.textContent = 'Live count unavailable. Check Firestore Rules.';
+    });
+
+    presenceHeartbeatTimer = setInterval(() => {
+      if (currentUser && currentUser.uid === user.uid && document.visibilityState === 'visible') {
+        writePresenceHeartbeat(user.uid).catch((error) => {
+          console.warn('Could not refresh online presence:', error);
+        });
+      }
+    }, 30000);
+
+    // Recalculate locally so inactive sessions expire even if no Firestore document changes.
+    presenceRefreshTimer = setInterval(updateMemberStats, 10000);
+  }
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && currentUser) {
+      writePresenceHeartbeat(currentUser.uid).catch((error) => {
+        console.warn('Could not refresh online presence:', error);
+      });
+    }
+    updateMemberStats();
+  });
 
   function applyAdminControls() {
     document.querySelectorAll('[data-admin-only]').forEach((element) => {
@@ -185,6 +365,9 @@ import { firebaseConfig, adminEmail } from "./firebase-config.js";
       return;
     }
 
+    // Load the public aggregate while signed out so the Home page can show true library counts.
+    startPublicLibraryStatsListener();
+
     onAuthStateChanged(auth, (user) => {
       currentUser = user || null;
       isAdmin = Boolean(user)
@@ -195,6 +378,7 @@ import { firebaseConfig, adminEmail } from "./firebase-config.js";
 
       if (currentUser) {
         startFirestoreListener();
+        startMemberStats(currentUser);
         if (pendingPageAfterAuth) {
           const requestedPage = pendingPageAfterAuth;
           pendingPageAfterAuth = null;
@@ -217,6 +401,7 @@ import { firebaseConfig, adminEmail } from "./firebase-config.js";
         }
       } else {
         stopFirestoreListener();
+        stopMemberStats();
         if (currentPage === 'library') {
           showPage('home', { push: true, scroll: true });
         }
@@ -600,9 +785,28 @@ const mainName = (() => {
     const all = getAllVideos();
     const filtered = currentFilteredVideos();
     renderFilters(all);
-    els.statVideos.textContent = String(all.length);
-    els.statSubjects.textContent = String(new Set(all.map((video) => video.subject)).size);
-    els.statSaved.textContent = String(saved.size);
+    const publicVideoCount = Number.isInteger(publicLibraryStats?.videoCount)
+      ? publicLibraryStats.videoCount
+      : null;
+    const publicSubjectCount = Number.isInteger(publicLibraryStats?.subjectCount)
+      ? publicLibraryStats.subjectCount
+      : null;
+    const displayedVideoCount = !firebaseConfigured
+      ? all.length
+      : currentUser
+        ? (hasLoadedSharedVideos ? all.length : '…')
+        : (publicVideoCount === null ? '—' : publicVideoCount);
+    const displayedSubjectCount = !firebaseConfigured
+      ? new Set(all.map((video) => video.subject)).size
+      : currentUser
+        ? (hasLoadedSharedVideos ? new Set(all.map((video) => video.subject)).size : '…')
+        : (publicSubjectCount === null ? '—' : publicSubjectCount);
+    const displayedSavedCount = currentUser && hasLoadedSharedVideos
+      ? all.filter((video) => saved.has(video.id)).length
+      : saved.size;
+    els.statVideos.textContent = String(displayedVideoCount);
+    els.statSubjects.textContent = String(displayedSubjectCount);
+    els.statSaved.textContent = String(displayedSavedCount);
     els.videoGrid.innerHTML = renderPlaylistGroups(filtered);
     const noVideosAtAll = all.length === 0;
     els.videoGrid.classList.toggle('hidden', noVideosAtAll || filtered.length === 0);
@@ -892,6 +1096,7 @@ const mainName = (() => {
     const homeVisible = currentPage === 'home';
     document.querySelector('.hero')?.classList.toggle('page-view-hidden', !homeVisible);
     document.querySelector('.quick-stats')?.classList.toggle('page-view-hidden', !homeVisible);
+    document.querySelector('.member-stats')?.classList.toggle('page-view-hidden', !homeVisible);
     document.getElementById('library')?.classList.toggle('page-view-hidden', currentPage !== 'library');
     document.getElementById('subjects')?.classList.toggle('page-view-hidden', currentPage !== 'library');
     document.getElementById('about')?.classList.toggle('page-view-hidden', currentPage !== 'about');
@@ -1045,6 +1250,9 @@ const mainName = (() => {
     els.userAccountBtn.setAttribute('aria-expanded', 'false');
     if (!auth) return;
     try {
+      if (db && currentUser?.uid) {
+        try { await deleteDoc(doc(db, 'sitePresence', currentUser.uid)); } catch (_) { /* Presence naturally expires if cleanup is blocked. */ }
+      }
       await signOut(auth);
       notify('You have signed out.');
     } catch (error) {

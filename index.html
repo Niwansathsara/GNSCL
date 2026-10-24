@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f7f9ff" />
-  <meta name="description" content="A clean, community-minded library for class videos and study resources." />
+  <meta name="description" content="A free, student-built class video library that helps learners organise lessons, revise subjects and prepare for A/L examinations." />
   <title>GNS Class Library — Learn together</title>
   <link rel="icon" type="image/svg+xml" href="gns-logo.svg" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -84,6 +84,25 @@
       <div class="stat-footnote"><span class="live-pulse"></span> Your learning library, at your pace</div>
     </section>
 
+    <section class="member-stats wrap" aria-label="GNS Class Library member statistics">
+      <div class="member-stats-heading">
+        <span class="eyebrow">THE COMMUNITY</span>
+        <h2>Our study community</h2>
+        <p>See how many accounts are registered and how many members are currently active.</p>
+      </div>
+      <div class="member-stats-counters">
+        <article class="member-stat-card">
+          <span class="member-stat-icon member-stat-online" aria-hidden="true">●</span>
+          <span class="member-stat-copy"><strong id="statOnline">—</strong><small>Live online now</small></span>
+        </article>
+        <article class="member-stat-card">
+          <span class="member-stat-icon member-stat-registered" aria-hidden="true">♙</span>
+          <span class="member-stat-copy"><strong id="statRegistered">—</strong><small>Total registered accounts</small></span>
+        </article>
+      </div>
+      <p class="member-stats-note"><span class="live-pulse" aria-hidden="true"></span><span id="memberStatsNoteText">Sign in to view live member counts.</span></p>
+    </section>
+
     <section class="library-section wrap page-view-hidden" id="library" aria-labelledby="library-title">
       <div class="section-heading">
         <div><div class="eyebrow section-eyebrow">THE COLLECTION</div><h2 id="library-title">Class video library<span class="heading-period">.</span></h2><p class="section-subtitle">Find a lesson, revisit a topic or save a video for your next study session.</p></div>
@@ -116,7 +135,50 @@
       </div>
     </section>
 
-    <section class="about-section wrap page-view-hidden" id="about"><div class="about-mark"><img src="gns-logo.svg" alt="" /></div><div class="about-text"><div class="eyebrow">A LITTLE NOTE</div><h2>Built to make learning easier.</h2><p>GNS Class Library is a learning-link organiser made for students to collect useful lessons in one clean, searchable place.</p></div><div class="creator-card"><span class="creator-label">CREATED BY</span><strong>G. Niwan Sathsara</strong><span class="creator-sub">A student-built study space <span>✦</span></span></div></section>
+    <section class="about-page wrap page-view-hidden" id="about" aria-labelledby="about-main-title">
+      <header class="about-intro-card">
+        <span class="eyebrow">WHY GNS CLASS LIBRARY EXISTS</span>
+        <h2 id="about-main-title">A student-built space for a stronger learning journey.</h2>
+        <p>GNS Class Library was created by a student with a simple goal: make useful class lessons easier to find, organise and revisit. By bringing lesson links and playlists together in one place, the library helps learners spend less time searching and more time building understanding.</p>
+      </header>
+
+      <section class="about-free-card" aria-labelledby="about-free-title">
+        <div class="about-section-icon" aria-hidden="true">✦</div>
+        <div>
+          <span class="about-card-kicker">OPEN ACCESS · STUDENT PROJECT</span>
+          <h3 id="about-free-title">Completely free to use.</h3>
+          <p>This website has been made to support educational progress and help students make better use of the learning resources available to them. Access to GNS Class Library is entirely free: no subscription, membership fee or payment is required. Its purpose is to make learning links easier to reach and study more convenient for everyone using it.</p>
+        </div>
+      </section>
+
+      <section class="about-rights-notice" aria-labelledby="about-rights-title">
+        <div class="about-rights-symbol" aria-hidden="true">©</div>
+        <div>
+          <span class="about-card-kicker">CONTENT OWNERSHIP NOTICE</span>
+          <h3 id="about-rights-title">Respect teachers and original content owners.</h3>
+          <p class="about-rights-emphasis">All lesson videos, class recordings and linked learning materials remain the property of their respective teachers, creators and/or original rights holders. All applicable rights belong to those owners; GNS Class Library does not claim ownership of third-party content.</p>
+          <p>This site is intended to organise learning links for educational use. Materials should be accessed and shared only in accordance with the original platform's terms and the permission given by the relevant teacher or content owner. If a teacher or rights holder asks for a link to be corrected or removed, please contact the site creator so the matter can be reviewed.</p>
+        </div>
+      </section>
+
+      <section class="about-al-guide" aria-labelledby="about-al-title">
+        <div class="about-al-heading">
+          <span class="eyebrow">YOUR A/L STUDY JOURNEY</span>
+          <h3 id="about-al-title">Use these resources purposefully and work towards A/L success.</h3>
+          <p>Videos are most useful when they become part of a steady study plan. Use the library to support your learning—not as a replacement for your teachers, textbooks or your own practice.</p>
+        </div>
+        <div class="about-al-steps">
+          <article><span>01</span><div><strong>Plan by subject and topic</strong><p>Choose a relevant playlist and set a realistic weekly target.</p></div></article>
+          <article><span>02</span><div><strong>Learn actively</strong><p>Pause when needed, make your own notes and revisit concepts you find difficult.</p></div></article>
+          <article><span>03</span><div><strong>Practise what you learn</strong><p>Combine each lesson with textbook exercises, past-paper questions and timed practice.</p></div></article>
+          <article><span>04</span><div><strong>Stay consistent and ask for guidance</strong><p>Review your progress regularly, follow your teachers' advice and keep moving forward step by step.</p></div></article>
+        </div>
+        <p class="about-al-closing">Small, consistent efforts can make a meaningful difference. Use the resources wisely, protect your study time and keep working towards your goals.</p>
+      </section>
+
+      <!-- Existing About note kept unchanged at the bottom, as requested. -->
+      <section class="about-section" aria-label="Original About note"><div class="about-mark"><img src="gns-logo.svg" alt="" /></div><div class="about-text"><div class="eyebrow">A LITTLE NOTE</div><h2>Built to make learning easier.</h2><p>GNS Class Library is a learning-link organiser made for students to collect useful lessons in one clean, searchable place.</p></div><div class="creator-card"><span class="creator-label">CREATED BY</span><strong>G. Niwan Sathsara</strong><span class="creator-sub">A student-built study space <span>✦</span></span></div></section>
+    </section>
   </main>
 
   <footer class="site-footer"><div class="wrap footer-inner"><a class="footer-brand" href="#top" data-page-target="home"><img src="gns-logo.svg" alt="" /><span>GNS Class Library</span></a><span class="footer-note">Learn together. Grow together.</span><span class="footer-copy">© <span id="yearNow"></span> G. Niwan Sathsara</span></div><div class="wrap permission-note">Please only share or publish class recordings and links that you have permission to distribute. Private or restricted class materials should stay private.</div></footer>
