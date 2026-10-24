@@ -161,5 +161,58 @@
   <div class="toast" id="toast" role="status" aria-live="polite"><span class="toast-check">✓</span><span id="toastText">Done</span></div>
   <input class="hidden" type="file" id="importFile" accept="application/json,.json" />
   <script type="module" src="app.js"></script>
+  <div class="modal-backdrop hidden" id="userAuthModal">
+  <section
+    class="modal-panel"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="userAuthTitle"
+    style="width:min(440px,100%); padding:24px; background:var(--surface,#fff); color:var(--text,#222); border-radius:18px;"
+  >
+    <h2 id="userAuthTitle">Login</h2>
+    <p id="userAuthDescription">Sign in or create your study account.</p>
+
+    <form id="userAuthForm">
+      <label class="field-label" for="userAuthEmail">Email address</label>
+      <input
+        class="form-control"
+        id="userAuthEmail"
+        type="email"
+        autocomplete="email"
+        placeholder="Enter your email"
+        required
+      >
+
+      <label class="field-label" for="userAuthPassword">Password</label>
+      <input
+        class="form-control"
+        id="userAuthPassword"
+        type="password"
+        autocomplete="current-password"
+        minlength="6"
+        placeholder="At least 6 characters"
+        required
+      >
+
+      <p id="userAuthMessage" role="status"></p>
+
+      <button class="button button-primary" id="userAuthSubmit" type="submit">
+        Login
+      </button>
+
+      <button class="button button-quiet" id="userAuthToggle" type="button">
+        Create a new account
+      </button>
+
+      <button class="button button-quiet" id="userAuthReset" type="button">
+        Forgot password?
+      </button>
+
+      <button class="button button-quiet" id="userAuthClose" type="button">
+        Close
+      </button>
+    </form>
+  </section>
+</div>
 </body>
 </html>
