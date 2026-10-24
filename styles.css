@@ -1952,3 +1952,74 @@ body[data-active-page="library"] #library { min-height: 60vh; }
     font-size: 18px !important;
   }
 }
+/* GNS Hero text animations */
+.hero-copy .eyebrow {
+  opacity: 0;
+  animation: gnsEyebrowEnter 0.8s ease-out 0.15s forwards;
+}
+
+.hero-copy #hero-title {
+  opacity: 0;
+  animation: gnsTitleEnter 1s cubic-bezier(.2, .75, .25, 1) 0.3s forwards;
+}
+
+.hero-copy .eyebrow-dot {
+  animation: gnsDotPulse 2s ease-in-out 1s infinite;
+}
+
+.hero-copy #hero-title span {
+  background-size: 200% auto;
+  animation: gnsGradientFlow 4s ease-in-out 1.4s infinite alternate;
+}
+
+@keyframes gnsEyebrowEnter {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes gnsTitleEnter {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes gnsDotPulse {
+  0%, 100% {
+    box-shadow: 0 0 0 4px #edeaff;
+  }
+  50% {
+    box-shadow: 0 0 0 7px rgba(117, 91, 232, 0.12);
+  }
+}
+
+@keyframes gnsGradientFlow {
+  from {
+    background-position: 0% center;
+  }
+  to {
+    background-position: 100% center;
+  }
+}
+
+/* Respect reduced-motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  .hero-copy .eyebrow,
+  .hero-copy #hero-title,
+  .hero-copy .eyebrow-dot,
+  .hero-copy #hero-title span {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+}
