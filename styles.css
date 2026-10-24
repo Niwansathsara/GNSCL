@@ -1939,3 +1939,16 @@ body[data-active-page="library"] #library { min-height: 60vh; }
   .about-al-steps article { padding: 13px; }
   .about-page > .about-section { padding-top: 15px; padding-bottom: 34px; }
 }
+
+
+/* Make the creator name more prominent in the About section */
+#about .creator-card strong {
+  font-size: 20px !important;
+  line-height: 1.3;
+}
+
+@media (max-width: 560px) {
+  #about .creator-card strong {
+    font-size: 18px !important;
+  }
+}
