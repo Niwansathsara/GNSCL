@@ -182,7 +182,7 @@ import { firebaseConfig, adminEmail } from "./firebase-config.js";
 
 const mainPlaylist =
   rawMainPlaylist.toLowerCase() === 'season paper discussion 2027'
-    ? 'Amila Sir(Ch) Paper Discussion 2027'
+    ? 'Amila Sir Paper Discussion 2027'
     : rawMainPlaylist;
 
   const playlist = String(input.playlist || 'General videos')
