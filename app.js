@@ -148,33 +148,27 @@ import { firebaseConfig, adminEmail } from "./firebase-config.js";
     document.body.classList.toggle('is-admin', isAdmin);
   }
 
-  function initializeAdminAccess() {
-    applyAdminControls();
-    if (!firebaseConfigured || !auth) {
-      loadSharedVideos();
-      return;
-    }
-    onAuthStateChanged(auth, async (user) => {
-      const matchesAdmin = !!user
-        && String(user.email || '').trim().toLowerCase() === normalizedAdminEmail
-        && user.emailVerified === true;
-      if (user && !matchesAdmin) {
-        currentUser = null;
-        isAdmin = false;
-        applyAdminControls();
-        try { await signOut(auth); } catch (_) { /* Ignore sign-out cleanup errors. */ }
-        notify('This Google account is not authorised to manage GNS Class Library.');
-        startFirestoreListener();
-        render();
-        return;
-      }
-      currentUser = matchesAdmin ? user : null;
-      isAdmin = matchesAdmin;
-      applyAdminControls();
-      startFirestoreListener();
-      render();
-    });
+ function initializeAdminAccess() {
+  applyAdminControls();
+
+  if (!firebaseConfigured || !auth) {
+    loadSharedVideos();
+    return;
   }
+
+  onAuthStateChanged(auth, (user) => {
+    const matchesAdmin = !!user
+      && String(user.email || '').trim().toLowerCase() === normalizedAdminEmail
+      && user.emailVerified === true;
+
+    currentUser = user || null;
+    isAdmin = matchesAdmin;
+
+    applyAdminControls();
+    startFirestoreListener();
+    render();
+  });
+}
 
   function normalizeVideo(input) {  
   if (!input || typeof input !== 'object') return null;
