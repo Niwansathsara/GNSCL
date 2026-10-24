@@ -331,7 +331,14 @@ function renderPlaylistGroups(videos) {
 
   videos.forEach((video) => {
     const subject = String(video.subject || 'Other').trim() || 'Other';
-    const mainName = String(video.mainPlaylist || 'General').trim() || 'General';
+    const rawMainName = String(video.mainPlaylist || 'General')
+  .trim()
+  .replace(/\s+/g, ' ') || 'General';
+
+const mainName =
+  rawMainName.toLowerCase() === 'season paper discussion 2027'
+    ? 'Amila Sir(Ch) Paper Discussion 2027'
+    : rawMainName;
     const lessonName = String(video.playlist || 'General videos').trim() || 'General videos';
 
     const mainKey = `${subject.toLowerCase()}::${mainName.toLowerCase()}`;
