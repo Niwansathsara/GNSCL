@@ -1679,3 +1679,14 @@ body[data-active-page="library"] #library { min-height: 60vh; }
   .account-avatar { width: 28px; height: 28px; }
   .user-auth-panel { padding: 21px 18px; }
 }
+/* Move only THE COLLECTION label down */
+#library .section-eyebrow {
+  position: relative;
+  top: 10px;
+}
+
+@media (max-width: 560px) {
+  #library .section-eyebrow {
+    top: 8px;
+  }
+}
