@@ -771,6 +771,139 @@ const mainName =
     catch (error) { console.error('Sign-out failed:', error); notify('Could not sign out. Please refresh the page.'); }
   }
 
+  // GNS Class Library: User Email Login and Registration
+let userAuthMode = 'login';
+
+const userAuthModal = document.getElementById('userAuthModal');
+const userAuthBtn = document.getElementById('userAuthBtn');
+const userAuthForm = document.getElementById('userAuthForm');
+const userAuthTitle = document.getElementById('userAuthTitle');
+const userAuthSubmit = document.getElementById('userAuthSubmit');
+const userAuthToggle = document.getElementById('userAuthToggle');
+const userAuthClose = document.getElementById('userAuthClose');
+const userAuthReset = document.getElementById('userAuthReset');
+const userAuthMessage = document.getElementById('userAuthMessage');
+const userAuthEmail = document.getElementById('userAuthEmail');
+const userAuthPassword = document.getElementById('userAuthPassword');
+
+function setUserAuthMode(mode) {
+  userAuthMode = mode;
+  userAuthTitle.textContent =
+    mode === 'register' ? 'Create your account' : 'Login';
+
+  userAuthSubmit.textContent =
+    mode === 'register' ? 'Register' : 'Login';
+
+  userAuthToggle.textContent =
+    mode === 'register'
+      ? 'Already have an account? Login'
+      : 'Create a new account';
+
+  userAuthPassword.autocomplete =
+    mode === 'register' ? 'new-password' : 'current-password';
+
+  userAuthMessage.textContent = '';
+}
+
+userAuthBtn?.addEventListener('click', () => {
+  setUserAuthMode('login');
+  userAuthModal.classList.remove('hidden');
+});
+
+userAuthToggle?.addEventListener('click', () => {
+  setUserAuthMode(
+    userAuthMode === 'login' ? 'register' : 'login'
+  );
+});
+
+userAuthClose?.addEventListener('click', () => {
+  userAuthModal.classList.add('hidden');
+});
+
+userAuthForm?.addEventListener('submit', async (event) => {
+  event.preventDefault();
+
+  if (!firebaseConfigured || !auth) {
+    userAuthMessage.textContent =
+      'Firebase setup is required before signing in.';
+    return;
+  }
+
+  const email = userAuthEmail.value.trim();
+  const password = userAuthPassword.value;
+
+  userAuthSubmit.disabled = true;
+  userAuthMessage.textContent = '';
+
+  try {
+    if (userAuthMode === 'register') {
+      await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+      notify('Account created successfully.');
+    } else {
+      await signInWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+      notify('Login successful.');
+    }
+
+    userAuthModal.classList.add('hidden');
+    userAuthForm.reset();
+  } catch (error) {
+    console.error('User authentication failed:', error);
+
+    const messages = {
+      'auth/email-already-in-use':
+        'This email already has an account. Please log in.',
+      'auth/invalid-email':
+        'Please enter a valid email address.',
+      'auth/weak-password':
+        'Choose a stronger password with at least 6 characters.',
+      'auth/invalid-credential':
+        'Email or password is incorrect.',
+      'auth/user-disabled':
+        'This account has been disabled.',
+      'auth/too-many-requests':
+        'Too many attempts. Please try again later.'
+    };
+
+    userAuthMessage.textContent =
+      messages[error.code] ||
+      'Could not sign in. Please check your connection and try again.';
+  } finally {
+    userAuthSubmit.disabled = false;
+  }
+});
+
+userAuthReset?.addEventListener('click', async () => {
+  if (!firebaseConfigured || !auth) {
+    userAuthMessage.textContent = 'Firebase setup is required.';
+    return;
+  }
+
+  const email = userAuthEmail.value.trim();
+
+  if (!email) {
+    userAuthMessage.textContent =
+      'Enter your email address first.';
+    return;
+  }
+
+  try {
+    await sendPasswordResetEmail(auth, email);
+    userAuthMessage.textContent =
+      'Password reset instructions have been sent if the account exists.';
+  } catch (error) {
+    console.error('Password reset failed:', error);
+    userAuthMessage.textContent =
+      'Could not send the reset email. Check the email address and try again.';
+  }
+});
   els.adminLoginBtn.addEventListener('click', handleAdminLogin);
   els.adminLogoutBtn.addEventListener('click', handleAdminLogout);
   document.getElementById('openAddModal').addEventListener('click', () => openAddModal());
