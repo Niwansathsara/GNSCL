@@ -213,10 +213,11 @@ import { firebaseConfig, adminEmail } from "./firebase-config.js";
   function updateMemberStats() {
     if (!els.statOnline || !els.statRegistered || !els.memberStatsNoteText) return;
 
-    if (!currentUser || !db) {
+    // The member-count panel and its underlying records are admin-only.
+    if (!currentUser || !isAdmin || !db) {
       els.statOnline.textContent = '—';
       els.statRegistered.textContent = '—';
-      els.memberStatsNoteText.textContent = 'Sign in to view live member counts.';
+      els.memberStatsNoteText.textContent = 'Member counts are available to the site administrator only.';
       return;
     }
 
@@ -244,6 +245,38 @@ import { firebaseConfig, adminEmail } from "./firebase-config.js";
     }, { merge: true });
   }
 
+  function startAdminMemberCountListeners(user) {
+    if (!isAdmin || !db || !user || !currentUser || currentUser.uid !== user.uid) return;
+
+    if (!registeredUsersUnsubscribe) {
+      registeredUsersUnsubscribe = onSnapshot(collection(db, 'libraryUsers'), (snapshot) => {
+        registeredAccountsCount = snapshot.size;
+        updateMemberStats();
+      }, (error) => {
+        console.error('Registered-account counter failed:', error);
+        els.memberStatsNoteText.textContent = 'Registered count unavailable. Check Firestore Rules.';
+      });
+    }
+
+    if (!presenceUnsubscribe) {
+      presenceUnsubscribe = onSnapshot(collection(db, 'sitePresence'), (snapshot) => {
+        presenceRecords = snapshot.docs.map((item) => ({
+          uid: item.id,
+          lastSeen: item.data().lastSeen || null
+        }));
+        updateMemberStats();
+      }, (error) => {
+        console.error('Online-presence counter failed:', error);
+        els.memberStatsNoteText.textContent = 'Live count unavailable. Check Firestore Rules.';
+      });
+    }
+
+    if (!presenceRefreshTimer) {
+      // Recalculate locally so inactive sessions expire even if no Firestore document changes.
+      presenceRefreshTimer = setInterval(updateMemberStats, 10000);
+    }
+  }
+
   function stopMemberStats() {
     if (registeredUsersUnsubscribe) {
       registeredUsersUnsubscribe();
@@ -269,10 +302,13 @@ import { firebaseConfig, adminEmail } from "./firebase-config.js";
 
   async function startMemberStats(user) {
     if (!db || !user) return;
+
     if (memberStatsUid === user.uid) {
       writePresenceHeartbeat(user.uid).catch((error) => {
         console.warn('Could not refresh online presence:', error);
       });
+      // The same account may become verified/admin after an auth token refresh.
+      if (isAdmin) startAdminMemberCountListeners(user);
       return;
     }
 
@@ -283,37 +319,23 @@ import { firebaseConfig, adminEmail } from "./firebase-config.js";
 
     try {
       // Store only the Firebase UID as the document ID and a timestamp. No email is copied into Firestore.
-      const userRecordRef = doc(db, 'libraryUsers', user.uid);
-      const userRecord = await getDoc(userRecordRef);
-      if (!userRecord.exists()) {
-        await setDoc(userRecordRef, { createdAt: serverTimestamp() });
-      }
+      // A user can write only their own UID document; only Admin can list/read the collection.
+      // Merge avoids adding duplicate records and the collection size counts unique accounts.
+      await setDoc(doc(db, 'libraryUsers', user.uid), {
+        createdAt: serverTimestamp()
+      }, { merge: true });
       await writePresenceHeartbeat(user.uid);
     } catch (error) {
       console.error('Could not initialise member counters:', error);
-      els.memberStatsNoteText.textContent = 'Member counts could not load. Check Firestore Rules and try again.';
+      if (isAdmin) {
+        els.memberStatsNoteText.textContent = 'Member counts could not load. Check Firestore Rules and try again.';
+      }
     }
 
     if (memberStatsUid !== user.uid || !currentUser || currentUser.uid !== user.uid) return;
 
-    registeredUsersUnsubscribe = onSnapshot(collection(db, 'libraryUsers'), (snapshot) => {
-      registeredAccountsCount = snapshot.size;
-      updateMemberStats();
-    }, (error) => {
-      console.error('Registered-account counter failed:', error);
-      els.memberStatsNoteText.textContent = 'Registered count unavailable. Check Firestore Rules.';
-    });
-
-    presenceUnsubscribe = onSnapshot(collection(db, 'sitePresence'), (snapshot) => {
-      presenceRecords = snapshot.docs.map((item) => ({
-        uid: item.id,
-        lastSeen: item.data().lastSeen || null
-      }));
-      updateMemberStats();
-    }, (error) => {
-      console.error('Online-presence counter failed:', error);
-      els.memberStatsNoteText.textContent = 'Live count unavailable. Check Firestore Rules.';
-    });
+    // Every signed-in account contributes a UID-only presence heartbeat. Only Admin subscribes to all records.
+    if (isAdmin) startAdminMemberCountListeners(user);
 
     presenceHeartbeatTimer = setInterval(() => {
       if (currentUser && currentUser.uid === user.uid && document.visibilityState === 'visible') {
@@ -322,9 +344,6 @@ import { firebaseConfig, adminEmail } from "./firebase-config.js";
         });
       }
     }, 30000);
-
-    // Recalculate locally so inactive sessions expire even if no Firestore document changes.
-    presenceRefreshTimer = setInterval(updateMemberStats, 10000);
   }
 
   document.addEventListener('visibilitychange', () => {

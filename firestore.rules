@@ -80,9 +80,9 @@ service cloud.firestore {
     }
 
     // Counter registry: document IDs are Firebase UIDs; no emails or display names are stored.
-    // Only signed-in members can read these minimal counter records.
+    // Only the verified site Admin can read/list these records. Each user may write only their own UID record.
     match /libraryUsers/{userId} {
-      allow read: if request.auth != null;
+      allow read: if isSiteAdmin();
       allow create, update: if request.auth != null
         && request.auth.uid == userId
         && request.resource.data.keys().hasOnly(['createdAt'])
@@ -92,8 +92,9 @@ service cloud.firestore {
     }
 
     // Presence heartbeat: each signed-in user may update only their own last-seen timestamp.
+    // Only the verified site Admin can read/list all presence records.
     match /sitePresence/{userId} {
-      allow read: if request.auth != null;
+      allow read: if isSiteAdmin();
       allow create, update: if request.auth != null
         && request.auth.uid == userId
         && request.resource.data.keys().hasOnly(['lastSeen'])

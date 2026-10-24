@@ -1,0 +1,30 @@
+GNS Class Library — Live Online / Total Registered (Admin-only)
+
+මෙම update එකෙන්:
+- Home page එකේ “Live online now” සහ “Total registered accounts” කොටස Admin account එකට පමණක් පෙනේ.
+- සාමාන්‍ය signed-in පරිශීලකයන්ගේ browser එකේ counters නොපෙනේ.
+- Firestore Rules එකෙන් libraryUsers සහ sitePresence records කියවිය හැක්කේ verified Admin account එකට පමණයි. ඒ නිසා browser UI එක සඟවන එක පමණක් නොව, Firestore read access එකත් සීමා කරයි.
+- සියලු signed-in accounts තවමත් තමන්ගේම UID-only presence/counter record ကို update කරන නිසා Admin ගිණුමට online/registered counts ලබාගැනීමට හැකියි.
+- Email/display name counter collections වල எழுதப்படுவதில்லை. Existing videos documents-ஐ delete/overwrite செய்ய வேண்டிய அவசியமில்லை.
+
+GitHub update:
+1. ZIP එක extract කරන්න.
+2. GitHub repository එකේ index.html, app.js, styles.css files එකින් එක replace කරන්න (Edit හෝ Upload replacement භාවිත කරන්න) සහ Commit changes කරන්න.
+3. ZIP එකේ firestore.rules code එක copy කරන්න.
+
+Firebase Rules publish:
+1. https://console.firebase.google.com/project/gnscl-1291a/firestore/rules විවෘත කරන්න.
+2. ZIP එකේ firestore.rules file එකේ සම්පූර්ණ code එක Rules editor එකට paste කරන්න.
+3. Publish ඔබන්න.
+
+පරීක්ෂා කිරීම:
+1. Admin Google account එකෙන් login වී Home page එක බලන්න. Counters දෙක පේන්න ඕන.
+2. සාමාන්‍ය test account එකකින් login වී බලන්න. Counters section එක නොපෙනිය යුතුයි.
+3. සාමාන්‍ය user account එකෙන් Firestore Console එකට හෝ Admin controls වෙත access ලැබෙන්නේ නැති බව පරීක්ෂා කරන්න.
+4. Signed-in accounts heartbeat update කරන නිසා “Live online” යන්න පසුගිය තත්පර 90 තුළ heartbeat තිබූ accounts ගණනයි. Tab එක වසා දැමූ පසු count අඩුවෙන්න තත්පර 90ක් දක්වා යා හැක.
+5. “Total registered” යනු libraryUsers collection එකේ unique Firebase UID documents ගණනයි. Counter feature එකට deploy වූ පසු login වී record එකක් සාදා ඇති accounts ගණන; පැරණි Authentication accounts login නොකර තිබුණොත් වහාම count එකට ඇතුළත් නොවිය හැක.
+
+වැදගත්:
+- `firebase-config.js` හෝ `videos.json` replace කරන්න එපා.
+- Firebase Rules Publish කළාට පමණක් GitHub website update වෙන්නේ නැහැ; files commit කිරීමත් අවශ්‍යයි.
+- UI hide කිරීම තනිවම security නොවේ. මෙම update එක Rules එකත් Admin-only කරන නිසාම read access සීමා වෙනවා.
