@@ -1626,3 +1626,56 @@ footer,
     padding: 15px !important;
   }
 }
+
+
+/* GNS signed-in learning flow: landing, protected library, and separate About view */
+.page-view-hidden { display: none !important; }
+body[data-active-page="home"] .site-footer,
+body[data-active-page="library"] .site-footer,
+body[data-active-page="about"] .site-footer { display: block; }
+
+/* Account control replaces the separate Admin login button. */
+.account-menu-wrap { position: relative; display: inline-flex; align-items: center; }
+.account-button { gap: 8px; padding: 7px 10px 7px 7px; min-height: 42px; }
+.account-avatar { width: 27px; height: 27px; display: inline-grid; place-items: center; border-radius: 50%; color: #fff; background: linear-gradient(135deg,#5477f1,#8064e8); font-size: 11px; font-weight: 800; }
+.account-button-label { max-width: 100px; overflow: hidden; text-overflow: ellipsis; }
+.account-caret { color: #8e9ab0; font-size: 14px; }
+.account-dropdown { position: absolute; top: calc(100% + 10px); right: 0; width: min(270px, calc(100vw - 28px)); padding: 11px; border: 1px solid #e5eaf5; border-radius: 14px; background: #fff; box-shadow: 0 18px 50px rgba(32,46,91,.18); z-index: 80; }
+.account-email { display: block; padding: 9px 9px 12px; border-bottom: 1px solid #edf0f7; color: #6c7890; font-size: 11px; overflow-wrap: anywhere; }
+.account-signout { width: 100%; margin-top: 7px; padding: 10px 9px; border: 0; border-radius: 9px; background: #f5f7ff; color: #3e4f79; text-align: left; font-size: 12px; font-weight: 700; }
+.account-signout:hover { background: #eaf0ff; }
+
+/* Email/Password and Google sign-in dialog */
+.user-auth-backdrop { z-index: 1000; }
+.user-auth-panel { width: min(450px, 100%); padding: 26px; }
+.user-auth-panel .modal-head { margin-bottom: 12px; }
+.user-auth-panel .modal-head h2 { margin-top: 8px; }
+.user-auth-panel .modal-head p { font-size: 12px; line-height: 1.65; }
+.user-auth-form .field-label { margin-top: 13px; }
+.user-auth-form .form-control { font-size: 13px; }
+.user-auth-submit, .user-auth-google { width: 100%; min-height: 45px; margin-top: 15px; font-size: 13px; }
+.user-auth-toggle { width: 100%; margin-top: 9px; min-height: 42px; }
+.auth-divider { display: flex; align-items: center; gap: 12px; margin: 17px 0 3px; color: #9aa5b8; font-size: 10px; }
+.auth-divider::before, .auth-divider::after { content: ""; height: 1px; background: #e9edf6; flex: 1; }
+.user-auth-google { margin-top: 9px; background: #fff; color: #3f4c67; border-color: #e1e6f0; }
+.user-auth-admin-note { margin: 8px 2px 0; color: #8a96ad; font-size: 10px; line-height: 1.55; text-align: center; }
+.google-g { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: #f4f6fb; color: #4285f4; font: 800 13px Arial,sans-serif; }
+.user-auth-reset { display: block; margin: 13px auto 0; border: 0; background: transparent; color: #5a6fe0; font-size: 11px; font-weight: 700; }
+.user-auth-message { min-height: 0; margin: 10px 0 0; font-size: 11px; line-height: 1.55; overflow-wrap: anywhere; }
+.user-auth-message:empty { display: none; }
+.user-auth-message.is-error { color: #b74a48; }
+.user-auth-message.is-success { color: #248962; }
+.user-auth-footnote { margin: 16px 0 0; padding-top: 13px; border-top: 1px solid #edf0f7; color: #96a1b4; font-size: 10px; line-height: 1.6; text-align: center; }
+.user-auth-panel button:disabled { opacity: .65; cursor: wait; transform: none; }
+
+/* A page-like About section with balanced whitespace */
+body[data-active-page="about"] #about { min-height: min(68vh, 700px); align-content: center; padding-top: 70px; padding-bottom: 70px; }
+body[data-active-page="library"] #library { min-height: 60vh; }
+
+@media (max-width: 800px) {
+  .account-button { padding: 6px; min-height: 38px; }
+  .account-button-label { display: none; }
+  .account-caret { display: none; }
+  .account-avatar { width: 28px; height: 28px; }
+  .user-auth-panel { padding: 21px 18px; }
+}

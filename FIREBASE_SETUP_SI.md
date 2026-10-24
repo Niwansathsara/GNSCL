@@ -1,44 +1,48 @@
-# GNS Class Library — admin-only upload setup (සිංහල)
+# GNS Class Library — Login/Register සහ Admin setup (සිංහල)
 
-මෙම version එකේ website එක ඕනෑම කෙනෙකුට බලන්න පුළුවන්. Video එකක් add/delete කරන්න පුළුවන් ඔබගේ Google account email එකට පමණයි. ඒ අවසරය Firestore Security Rules මඟින් enforce කරනවා; button hide කරන එක මත පමණක් රඳා නොපවතී. YouTube video එක YouTube මතම තිබෙන අතර මෙහි save වන්නේ link සහ විස්තර පමණයි.
+මෙම version එකේ මුල් Home පිටුව සහ About පිටුව account එකක් නැතිව බලන්න පුළුවන්. **Class Library** වෙත යාමට Email/Password හෝ Google account එකකින් sign in/register විය යුතුයි. Login වූ පසු Home පිටුවේ `Explore the library` නැවත ඔබලා collection එක විවෘත කරන්න. සාමාන්‍ය පරිශීලකයන්ට videos බලන්න පුළුවන්; video Add/Import/Export/Delete බලතල ලබා දෙන්නේ Firebase හි allowlist කර ඇති Admin Google account එකට පමණයි.
 
-## 1. Firebase project එකක් හදන්න
-1. https://console.firebase.google.com/ වෙත ගොස් Google account එකෙන් sign in කරන්න.
-2. **Create a project / Add project** තෝරන්න. Project එකකට නමක් දෙන්න (උදා: `gns-class-library`) සහ project එක සාදන්න. Analytics අවශ්‍ය නැත්නම් disable කළ හැකියි.
-3. Project overview තුළ **Web (</>)** icon එක තෝරලා web app එකක් register කරන්න.
-4. Firebase පෙන්වන config object එකේ `apiKey`, `authDomain`, `projectId`, `appId` values ගන්න.
-5. මෙම package එකේ `firebase-config.js` තුළ screenshot එකේ Firebase project values දැනටමත් ඇතුළත් කරලා තියෙනවා. `adminEmail` එකට videos upload කරන්න භාවිතා කරන exact Google email එක දාන්න.
+## 1. Firebase Authentication
 
-## 2. Google sign-in enable කරන්න
-1. Firebase Console → **Authentication** → **Get started** → **Sign-in method** යන්න.
-2. **Google** provider එක enable කරලා project support email එක තෝරන්න, save කරන්න.
-3. Authentication → **Settings** → **Authorized domains** තුළ `niwansathsara.github.io` තියෙන බව බලන්න. නැත්නම් add කරන්න. ඔබේ GitHub Pages hostname වෙනස් නම් ඒ hostname එකම add කරන්න.
+1. Firebase Console තුළ දැනට ඇති `GNSCL` / `gnscl-1291a` project එක විවෘත කරන්න.
+2. **Authentication → Sign-in method** වෙත යන්න.
+3. **Email/Password** provider එක enable කර **Save** කරන්න.
+4. **Google** provider එකත් enable කර project support email එක තෝරා **Save** කරන්න.
+5. **Authentication → Settings → Authorized domains** තුළ `niwansathsara.github.io` තිබෙන බව තහවුරු කරන්න. නැත්නම් add කරන්න.
 
-## 3. Firestore database සහ permissions
-1. Firebase Console → **Firestore Database** → **Create database** යන්න. Production mode තෝරන්න. Location එක තෝරලා create කරන්න.
-2. Firestore → **Rules** tab එක open කරන්න.
-3. මේ folder එකේ `firestore.rules` file එකේ `YOUR_GOOGLE_EMAIL@gmail.com` යන placeholder එක occurrences දෙකක් තිබෙනවා. දෙකම `firebase-config.js` තුළ දැමූ exact Google email එකෙන් replace කරන්න.
-4. ඒ file එකේ සම්පූර්ණ rules copy කර Firestore Console → Rules editor එකට paste කරලා **Publish** කරන්න. GitHub එකට file එක upload කිරීමෙන් rules auto-deploy වෙන්නේ නැහැ; Console එකේ Publish කිරීම අත්‍යවශ්‍යයි.
+## 2. Firestore access rules — අත්‍යවශ්‍ය
 
-## 4. GitHub Pages එක update කරන්න
-ඔබේ `GNSCL` repository root එකට මෙම version එකේ files upload/replace කරන්න:
+1. Firebase Console → **Firestore Database → Rules** යන්න.
+2. Repository එකේ `firestore.rules` file එකේ සම්පූර්ණ අන්තර්ගතය Rules editor එකට paste කරන්න.
+3. **Publish** ඔබන්න. GitHub එකට `firestore.rules` upload කිරීමෙන් Firebase rules ස්වයංක්‍රීයව publish වෙන්නේ නැහැ.
+4. `firebase-config.js` හි `adminEmail` අගය සහ `firestore.rules` හි `isSiteAdmin()` email අගය එකම Admin Google email එක විය යුතුයි. Admin email එක නොවෙනස් කරන්නේ නම් ඒවා වෙනස් කරන්න අවශ්‍ය නැහැ.
+
+මෙම rules මඟින් Firestore video records කියවීමට sign-in අවශ්‍ය කරයි. Create/update/delete සඳහා verified Admin email එක පමණක් අවසර ලබයි. Rules එකේ `allow read: if request.auth != null;` සහ `isSiteAdmin()` කොටස් ඉවත් නොකරන්න.
+
+## 3. GitHub Pages files update කිරීම
+
+Repository එකේ root එකට ZIP එකේ files extract කර, වෙනස් වූ files replace කර commit කරන්න. Website එක සඳහා වැදගත් files:
+
 - `index.html`
-- `styles.css`
 - `app.js`
-- `firebase-config.js`
-- `gns-logo.svg`
+- `styles.css`
+- `firestore.rules` (Firebase Console එකේත් publish කළ යුතුයි)
+- `FIREBASE_SETUP_SI.md`, `README.md` (setup උපදෙස්)
 
-`firestore.rules`, `FIREBASE_SETUP_SI.md`, `README.md` repository එකේ තබාගන්න පුළුවන්; website display සඳහා rules file එක browser එකෙන් භාවිතා නොවේ. Commit changes කරලා `https://niwansathsara.github.io/GNSCL/` open කර `Ctrl + F5` කරන්න.
+`firebase-config.js`, `gns-logo.svg` සහ `videos.json` ගොනුත් repository එකේ තබාගන්න. `firebase-config.js` හි දැනට තිබෙන project values වෙනත් project එකකට මාරු නොකරන්න. Firestore cloud collection එකේ දැනට තිබෙන videos මේ ZIP එකේ `videos.json` ගොනුවට පිටපත් නොවේ; ඒවා Firestore තුළම පවතිනවා.
 
-## 5. Test කරන්න
-- Website එක සාමාන්‍ය visitor විදිහට open කරන්න: videos බැලීමට පුළුවන්, **Add a video** / import / export buttons නොපෙන්විය යුතුයි.
-- **Admin login** click කරලා setup එකේ දාපු exact Google account එකෙන් sign in වෙන්න. එවිට Add, Import, Export සහ Delete controls පෙන්විය යුතුයි.
-- වෙනත් Google account එකකින් sign in කරන්න උත්සාහ කළොත් access ලබා නොදේ. Firestore rules එකත් ඒ account එකේ writes deny කරනවා.
-- Video add කළ පසු එය Firestore තුළ save වෙනවා; වෙනත් visitor කෙනෙකුට page එක refresh නොකරම list එක update වෙන්න පුළුවන්.
+Commit කරලා `https://niwansathsara.github.io/GNSCL/` open කර `Ctrl + F5` ඔබන්න.
+
+## 4. පරීක්ෂා කිරීම
+
+1. Sign out කරලා website එක refresh කරන්න. Home page එක පෙන්විය යුතුයි; Library/Subjects වෙත හෝ `Explore the library` වෙත ගිය විට Login/Register window එක පෙන්විය යුතුයි.
+2. Email/Password වලින් register/login කරන්න, නැතිනම් **Continue with Google** භාවිත කරන්න. Login එකෙන් පසු profile icon එක පෙන්විය යුතුයි; `Explore the library` නැවත ඔබද්දී Main Playlist cards පෙන්විය යුතුයි.
+3. About link එක වෙනම About view එක විවෘත කළ යුතුයි.
+4. සාමාන්‍ය account එකකින් sign in කරද්දී Add/Import/Export/Delete controls නොපෙන්විය යුතුයි.
+5. Admin Google account එකෙන් sign in වුණාම Admin controls පෙන්විය යුතුයි. Upload/delete permissions Firestore rules වලින්ද ආරක්ෂා කර ඇත.
 
 ## වැදගත් ආරක්ෂක කරුණු
-- `firebase-config.js` තුළ Firebase web config public වීම සාමාන්‍ය දෙයක්. **Firestore rules** තමයි writes ආරක්ෂා කරන්නේ. Admin email එක `firebase-config.js` සහ `firestore.rules` දෙකේම එකම විය යුතුයි.
-- `firestore.rules` වල `allow write: if true` හෝ test-mode public writes භාවිතා කරන්න එපා.
-- Firebase no-cost quota/usage limits apply; Firebase Console → Usage and billing කොටසෙන් usage monitor කරන්න. Quota limit ඉක්මэрුවොත් service errors ඇතිවිය හැකියි.
-- Public video catalogue එක public read නිසා video links/metadata ඕනෑම කෙනෙකුට බලන්න පුළුවන් බව සැලකිල්ලට ගන්න. Private class recordings share කරන්න කලින් අවසර ගන්න.
-- Admin account email එක අන් අය සමඟ බෙදාගන්න එපා; Google account එකට strong security/2-Step Verification භාවිතා කරන්න.
+
+- Firebase Web App config එක client-side code එකේ තිබීම සාමාන්‍යයි; නමුත් Firestore rules ආරක්ෂිතව publish කළ යුතුයි.
+- Class Library videos සඳහා `request.auth != null` කියවීමේ නියමය නිසා sign-in අත්‍යවශ්‍යයි. Signed-in users හට library metadata සහ video links බලන්න පුළුවන්.
+- YouTube videos මෙහි upload කරන්නේ නැහැ; වීඩියෝ YouTube මතම තිබෙන අතර මෙහි save වන්නේ link සහ metadata පමණයි. Private/restricted class recordings share කිරීමට පෙර අවසර ලබාගන්න.

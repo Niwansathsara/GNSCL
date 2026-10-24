@@ -1,6 +1,6 @@
 # GNS Class Library — admin-only publishing
 
-Modern light-themed responsive static website for GitHub Pages. Public visitors can view the shared catalogue; only the Google account configured in Firebase can add/import/export/delete lesson links.
+Modern light-themed responsive static website for GitHub Pages. The Home and About views are public. Users must sign in with Email/Password or Google before entering the library; only the authorised Google account can add/import/export/delete lesson links.
 
 ## Files
 - `index.html` — page structure
@@ -12,4 +12,5 @@ Modern light-themed responsive static website for GitHub Pages. Public visitors 
 - `FIREBASE_SETUP_SI.md` — full Sinhala setup instructions
 
 ## Important
-This static version must be connected to Firebase before admin publishing works. Replace placeholders in `firebase-config.js`; replace the same admin email placeholder in `firestore.rules`; enable Google sign-in; create Firestore; publish the rules; authorize the GitHub Pages hostname. Never publish permissive `allow write: if true` rules. Videos themselves remain hosted on YouTube; only metadata and URLs are stored.
+- Library access is gated by Firebase Authentication. Make sure Email/Password and Google providers are enabled, and publish `firestore.rules` in Firebase Console (GitHub Pages does not deploy Firestore rules automatically).
+This static version must be connected to Firebase before authentication and admin publishing work. Enable Email/Password and Google sign-in, make sure the GitHub Pages hostname is authorized, and publish `firestore.rules` in Firebase Console. Library reads require authentication; video writes require the verified, allowlisted admin email. Never publish permissive public write rules. Videos remain hosted on YouTube; only metadata and URLs are stored.

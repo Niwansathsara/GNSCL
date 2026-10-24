@@ -65,8 +65,13 @@ import { firebaseConfig, adminEmail } from "./firebase-config.js";
     toast: document.getElementById('toast'),
     toastText: document.getElementById('toastText'),
     importFile: document.getElementById('importFile'),
-    adminLoginBtn: document.getElementById('adminLoginBtn'),
-    adminLogoutBtn: document.getElementById('adminLogoutBtn')
+    userAuthBtn: document.getElementById('userAuthBtn'),
+    userAccountWrap: document.getElementById('userAccountWrap'),
+    userAccountBtn: document.getElementById('userAccountBtn'),
+    userAccountAvatar: document.getElementById('userAccountAvatar'),
+    userAccountDropdown: document.getElementById('userAccountDropdown'),
+    userAccountEmail: document.getElementById('userAccountEmail'),
+    userSignOutBtn: document.getElementById('userSignOutBtn')
   };
 
   let sharedVideos = [];
@@ -84,6 +89,13 @@ import { firebaseConfig, adminEmail } from "./firebase-config.js";
   let onlySaved = false;
   let toastTimer;
   let lastFocus = null;
+  let currentPage = 'home';
+  let activeNavTarget = 'home';
+  let pendingPageAfterAuth = null;
+  let pendingSubjectAfterAuth = null;
+  let pendingFromInitialHash = false;
+  let userInitiatedAuthInProgress = false;
+  let pageBeforeAuthModal = 'home';
 
   function readJSON(key, fallback) {
     try {
@@ -126,7 +138,7 @@ import { firebaseConfig, adminEmail } from "./firebase-config.js";
   }
 
   function startFirestoreListener() {
-    if (!db || firestoreUnsubscribe) return;
+    if (!db || !currentUser || firestoreUnsubscribe) return;
     firestoreUnsubscribe = onSnapshot(collection(db, 'videos'), (snapshot) => {
       sharedVideos = snapshot.docs.map((item) => normalizeVideo({ ...item.data(), id: item.id })).filter(Boolean);
       render();
@@ -136,39 +148,87 @@ import { firebaseConfig, adminEmail } from "./firebase-config.js";
     });
   }
 
+  function stopFirestoreListener() {
+    if (firestoreUnsubscribe) {
+      firestoreUnsubscribe();
+      firestoreUnsubscribe = null;
+    }
+    sharedVideos = [];
+  }
+
   function applyAdminControls() {
     document.querySelectorAll('[data-admin-only]').forEach((element) => {
       element.classList.toggle('hidden', !isAdmin);
     });
-    els.adminLoginBtn.classList.toggle('hidden', isAdmin);
-    els.adminLogoutBtn.classList.toggle('hidden', !isAdmin);
-    els.adminLoginBtn.textContent = firebaseConfigured ? 'Admin login' : 'Admin setup needed';
-    els.adminLogoutBtn.textContent = 'Sign out';
-    els.adminLogoutBtn.title = currentUser?.email ? `Signed in as ${currentUser.email}` : 'Sign out of admin mode';
+
+    const signedIn = Boolean(currentUser);
+    els.userAuthBtn.classList.toggle('hidden', signedIn);
+    els.userAccountWrap.classList.toggle('hidden', !signedIn);
+
+    if (signedIn) {
+      const email = String(currentUser.email || 'Signed-in user');
+      const display = String(currentUser.displayName || email.split('@')[0] || 'Account');
+      els.userAccountEmail.textContent = email;
+      els.userAccountAvatar.textContent = Array.from(display.trim())[0]?.toUpperCase() || 'U';
+      els.userAccountBtn.title = `Signed in as ${email}`;
+      els.userAccountBtn.setAttribute('aria-label', `Account menu for ${email}`);
+    }
+
     document.body.classList.toggle('is-admin', isAdmin);
   }
 
- function initializeAdminAccess() {
-  applyAdminControls();
-
-  if (!firebaseConfigured || !auth) {
-    loadSharedVideos();
-    return;
-  }
-
-  onAuthStateChanged(auth, (user) => {
-    const matchesAdmin = !!user
-      && String(user.email || '').trim().toLowerCase() === normalizedAdminEmail
-      && user.emailVerified === true;
-
-    currentUser = user || null;
-    isAdmin = matchesAdmin;
-
+  function initializeAdminAccess() {
     applyAdminControls();
-    startFirestoreListener();
-    render();
-  });
-}
+
+    if (!firebaseConfigured || !auth) {
+      loadSharedVideos();
+      return;
+    }
+
+    onAuthStateChanged(auth, (user) => {
+      currentUser = user || null;
+      isAdmin = Boolean(user)
+        && String(user.email || '').trim().toLowerCase() === normalizedAdminEmail
+        && user.emailVerified === true;
+
+      applyAdminControls();
+
+      if (currentUser) {
+        startFirestoreListener();
+        if (pendingPageAfterAuth) {
+          const requestedPage = pendingPageAfterAuth;
+          pendingPageAfterAuth = null;
+          if (pendingFromInitialHash) {
+            pendingFromInitialHash = false;
+            showPage(requestedPage, { push: false, scroll: true });
+          } else if (userInitiatedAuthInProgress) {
+            // A new sign-in/register just completed: stay on Home until Explore is clicked again.
+            userInitiatedAuthInProgress = false;
+          } else {
+            // The visitor was already signed in when they clicked Explore; honour that click.
+            if (pendingSubjectAfterAuth) {
+              selectedSubject = pendingSubjectAfterAuth;
+              pendingSubjectAfterAuth = null;
+            }
+            userAuthModal?.classList.add('hidden');
+            document.body.style.overflow = '';
+            showPage(requestedPage, { push: true, scroll: true });
+          }
+        }
+      } else {
+        stopFirestoreListener();
+        if (currentPage === 'library') {
+          showPage('home', { push: true, scroll: true });
+        }
+        if (pendingPageAfterAuth) {
+          pendingFromInitialHash = false;
+          openUserAuthModal('login', pendingPageAfterAuth, true);
+        }
+      }
+
+      render();
+    });
+  }
 
   function normalizeVideo(input) {  
   if (!input || typeof input !== 'object') return null;
@@ -183,12 +243,16 @@ import { firebaseConfig, adminEmail } from "./firebase-config.js";
   .replace(/\s+/g, ' ')
   .slice(0, 80) || 'General';
 
-const mainPlaylist =
-  rawMainPlaylist.toLowerCase() === 'season paper discussion 2027'
-    ? 'Amila Sir Paper Discussion 2027'
-    : rawMainPlaylist.toLowerCase() === 'home work discussion'
-      ? 'Anuradha Sir Home Work Discussion 2027'
-      : rawMainPlaylist;
+const mainPlaylist = (() => {
+  const key = rawMainPlaylist.toLowerCase();
+  if (key === 'season paper discussion 2027' || key === 'amila sir(ch) paper discussion 2027' || key === 'amila sir (ch) paper discussion 2027') {
+    return 'Amila Sir Paper Discussion 2027';
+  }
+  if (key === 'home work discussion' || key === 'anuradha sir home work discussion') {
+    return 'Anuradha sir Home Work Discussion 2027';
+  }
+  return rawMainPlaylist;
+})();
 
   const playlist = String(input.playlist || 'General videos')
     .trim().slice(0, 80) || 'General videos';
@@ -340,10 +404,16 @@ function renderPlaylistGroups(videos) {
   .trim()
   .replace(/\s+/g, ' ') || 'General';
 
-const mainName =
-  rawMainName.toLowerCase() === 'season paper discussion 2027'
-    ? 'Amila Sir(Ch) Paper Discussion 2027'
-    : rawMainName;
+const mainName = (() => {
+  const key = rawMainName.toLowerCase();
+  if (key === 'season paper discussion 2027' || key === 'amila sir(ch) paper discussion 2027' || key === 'amila sir (ch) paper discussion 2027') {
+    return 'Amila Sir Paper Discussion 2027';
+  }
+  if (key === 'home work discussion' || key === 'anuradha sir home work discussion') {
+    return 'Anuradha sir Home Work Discussion 2027';
+  }
+  return rawMainName;
+})();
     const lessonName = String(video.playlist || 'General videos').trim() || 'General videos';
 
     const mainKey = `${subject.toLowerCase()}::${mainName.toLowerCase()}`;
@@ -629,9 +699,6 @@ const mainName =
     `https://www.youtube-nocookie.com/embed/${encodeURIComponent(videoId)}?autoplay=1&rel=0`;
 
   els.playerModal.classList.remove('hidden');
-   if (!els.playerModal.matches(':popover-open')) {
-  els.playerModal.showPopover();
-}
   document.body.style.overflow = 'hidden';
 
   els.playerModal.querySelector('.modal-close').focus();
@@ -639,10 +706,6 @@ const mainName =
 
   function closePlayer() {
   els.videoFrame.src = '';
-
-  if (els.playerModal.matches(':popover-open')) {
-    els.playerModal.hidePopover();
-  }
 
   closeModal(els.playerModal);
 }
@@ -747,165 +810,286 @@ const mainName =
     }
   }
 
-  async function handleAdminLogin() {
+  let userAuthMode = 'login';
+
+  const userAuthModal = document.getElementById('userAuthModal');
+  const userAuthForm = document.getElementById('userAuthForm');
+  const userAuthTitle = document.getElementById('userAuthTitle');
+  const userAuthDescription = document.getElementById('userAuthDescription');
+  const userAuthSubmit = document.getElementById('userAuthSubmit');
+  const userAuthToggle = document.getElementById('userAuthToggle');
+  const userAuthCloseIcon = document.getElementById('userAuthCloseIcon');
+  const userAuthGoogleBtn = document.getElementById('userAuthGoogleBtn');
+  const userAuthReset = document.getElementById('userAuthReset');
+  const userAuthMessage = document.getElementById('userAuthMessage');
+  const userAuthEmail = document.getElementById('userAuthEmail');
+  const userAuthPassword = document.getElementById('userAuthPassword');
+
+  function setUserAuthMode(mode) {
+    userAuthMode = mode === 'register' ? 'register' : 'login';
+    const registering = userAuthMode === 'register';
+    userAuthTitle.textContent = registering ? 'Create your account' : 'Login';
+    userAuthDescription.textContent = registering
+      ? 'Create an account to access class playlists.'
+      : 'Sign in to explore your class playlists.';
+    userAuthSubmit.textContent = registering ? 'Create account' : 'Login';
+    userAuthToggle.textContent = registering
+      ? 'Already have an account? Login'
+      : 'New here? Create an account';
+    userAuthPassword.autocomplete = registering ? 'new-password' : 'current-password';
+    userAuthMessage.textContent = '';
+    userAuthMessage.classList.remove('is-error', 'is-success');
+  }
+
+  function setUserAuthMessage(message, type = 'error') {
+    userAuthMessage.textContent = message;
+    userAuthMessage.classList.toggle('is-error', type === 'error');
+    userAuthMessage.classList.toggle('is-success', type === 'success');
+  }
+
+  function openUserAuthModal(mode = 'login', requestedPage = 'library', keepPending = false) {
+    pageBeforeAuthModal = currentPage;
+    if (!keepPending) pendingPageAfterAuth = requestedPage;
+    setUserAuthMode(mode);
+    userAuthModal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+    setTimeout(() => userAuthEmail.focus(), 40);
+  }
+
+  function closeUserAuthModal() {
+    userAuthModal.classList.add('hidden');
+    if (els.addModal.classList.contains('hidden') && els.playerModal.classList.contains('hidden')) {
+      document.body.style.overflow = '';
+    }
+    pendingPageAfterAuth = null;
+    pendingSubjectAfterAuth = null;
+    pendingFromInitialHash = false;
+    const returnHash = activeNavTarget === 'home' ? 'top' : activeNavTarget;
+    history.replaceState({ page: currentPage }, '', `${location.pathname}${location.search}#${returnHash}`);
+    if (currentPage !== pageBeforeAuthModal) {
+      showPage(pageBeforeAuthModal, { push: false, scroll: false });
+    }
+  }
+
+  function showPage(target, options = {}) {
+    const { push = false, scroll = true } = options;
+    const allowedTargets = ['home', 'library', 'subjects', 'about'];
+    if (!allowedTargets.includes(target)) target = 'home';
+
+    if ((target === 'library' || target === 'subjects') && !currentUser) {
+      pendingPageAfterAuth = target;
+      openUserAuthModal('login', target, true);
+      if (!firebaseConfigured) {
+        setUserAuthMessage('The site owner needs to finish Firebase Authentication setup before accounts can sign in.');
+      }
+      return;
+    }
+
+    activeNavTarget = target;
+    currentPage = target === 'subjects' ? 'library' : target;
+    document.body.dataset.activePage = currentPage;
+
+    const homeVisible = currentPage === 'home';
+    document.querySelector('.hero')?.classList.toggle('page-view-hidden', !homeVisible);
+    document.querySelector('.quick-stats')?.classList.toggle('page-view-hidden', !homeVisible);
+    document.getElementById('library')?.classList.toggle('page-view-hidden', currentPage !== 'library');
+    document.getElementById('subjects')?.classList.toggle('page-view-hidden', currentPage !== 'library');
+    document.getElementById('about')?.classList.toggle('page-view-hidden', currentPage !== 'about');
+
+    document.querySelectorAll('.main-nav [data-page-target]').forEach((link) => {
+      link.classList.toggle('active', link.dataset.pageTarget === activeNavTarget);
+    });
+
+    if (push) {
+      const hash = target === 'home' ? 'top' : target;
+      history.pushState({ page: target }, '', `${location.pathname}${location.search}#${hash}`);
+    }
+
+    if (scroll) {
+      const section = target === 'home'
+        ? document.getElementById('top')
+        : target === 'about'
+          ? document.getElementById('about')
+          : target === 'subjects'
+            ? document.getElementById('subjects')
+            : document.getElementById('library');
+      if (section) section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    if (target === 'library' || target === 'subjects') render();
+  }
+
+  function navigateTo(target) {
+    if (target === 'library' || target === 'subjects') {
+      if (!currentUser) {
+        pendingPageAfterAuth = target;
+        openUserAuthModal('login', target, true);
+        if (!firebaseConfigured) {
+          setUserAuthMessage('The site owner needs to finish Firebase Authentication setup before accounts can sign in.');
+        }
+        return;
+      }
+      if (pendingSubjectAfterAuth) {
+        selectedSubject = pendingSubjectAfterAuth;
+        pendingSubjectAfterAuth = null;
+      }
+      showPage(target, { push: true, scroll: true });
+      return;
+    }
+    pendingPageAfterAuth = null;
+    if (target === 'home' || target === 'about') {
+      showPage(target, { push: true, scroll: true });
+    }
+  }
+
+  els.userAuthBtn.addEventListener('click', () => openUserAuthModal('login', 'library'));
+  userAuthToggle.addEventListener('click', () => setUserAuthMode(userAuthMode === 'login' ? 'register' : 'login'));
+  userAuthCloseIcon.addEventListener('click', closeUserAuthModal);
+
+  userAuthForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
     if (!firebaseConfigured || !auth) {
-      notify('Set up Firebase first. Follow FIREBASE_SETUP_SI.md, then upload firebase-config.js.');
+      setUserAuthMessage('Firebase is not configured. Please contact the site owner.');
+      return;
+    }
+
+    const email = userAuthEmail.value.trim();
+    const password = userAuthPassword.value;
+    userAuthSubmit.disabled = true;
+    userInitiatedAuthInProgress = true;
+    setUserAuthMessage('');
+
+    try {
+      if (userAuthMode === 'register') {
+        await createUserWithEmailAndPassword(auth, email, password);
+        notify('Account created. Click “Explore the library” to continue.');
+      } else {
+        await signInWithEmailAndPassword(auth, email, password);
+        notify('Login successful. Click “Explore the library” to continue.');
+      }
+      userAuthModal.classList.add('hidden');
+      document.body.style.overflow = '';
+      userAuthForm.reset();
+    } catch (error) {
+      userInitiatedAuthInProgress = false;
+      console.error('User authentication failed:', error);
+      const messages = {
+        'auth/email-already-in-use': 'This email already has an account. Please log in instead.',
+        'auth/invalid-email': 'Please enter a valid email address.',
+        'auth/weak-password': 'Choose a stronger password with at least 6 characters.',
+        'auth/invalid-credential': 'Email or password is incorrect.',
+        'auth/user-disabled': 'This account has been disabled.',
+        'auth/too-many-requests': 'Too many attempts. Please try again later.',
+        'auth/network-request-failed': 'Network connection failed. Check your internet and try again.'
+      };
+      setUserAuthMessage(messages[error.code] || 'Could not sign in. Please check your details and try again.');
+    } finally {
+      userAuthSubmit.disabled = false;
+    }
+  });
+
+  userAuthGoogleBtn.addEventListener('click', async () => {
+    if (!firebaseConfigured || !auth) {
+      setUserAuthMessage('Firebase is not configured. Please contact the site owner.');
+      return;
+    }
+    userAuthGoogleBtn.disabled = true;
+    userInitiatedAuthInProgress = true;
+    try {
+      await signInWithPopup(auth, new GoogleAuthProvider());
+      userAuthModal.classList.add('hidden');
+      document.body.style.overflow = '';
+      notify('Google sign-in successful. Click “Explore the library” to continue.');
+    } catch (error) {
+      userInitiatedAuthInProgress = false;
+      console.error('Google sign-in failed:', error);
+      const messages = {
+        'auth/popup-blocked': 'Your browser blocked the Google sign-in popup. Allow popups and try again.',
+        'auth/unauthorized-domain': 'Add niwansathsara.github.io under Firebase Authentication → Settings → Authorized domains.',
+        'auth/popup-closed-by-user': 'The Google sign-in window was closed before finishing.'
+      };
+      setUserAuthMessage(messages[error.code] || 'Google sign-in failed. Check that Google sign-in is enabled in Firebase.');
+    } finally {
+      userAuthGoogleBtn.disabled = false;
+    }
+  });
+
+  userAuthReset.addEventListener('click', async () => {
+    if (!firebaseConfigured || !auth) {
+      setUserAuthMessage('Firebase is not configured. Please contact the site owner.');
+      return;
+    }
+    const email = userAuthEmail.value.trim();
+    if (!email) {
+      setUserAuthMessage('Enter your email address first.');
+      userAuthEmail.focus();
       return;
     }
     try {
-      await signInWithPopup(auth, new GoogleAuthProvider());
+      await sendPasswordResetEmail(auth, email);
+      setUserAuthMessage('If an account uses this email, password reset instructions have been sent.', 'success');
     } catch (error) {
-      console.error('Admin sign-in failed:', error);
-      const message = error?.code === 'auth/popup-blocked'
-        ? 'Your browser blocked the sign-in popup. Allow popups and try again.'
-        : error?.code === 'auth/unauthorized-domain'
-          ? 'Add niwansathsara.github.io under Firebase Authentication > Settings > Authorized domains.'
-          : 'Google sign-in failed. Check that the Google provider is enabled in Firebase Authentication.';
-      notify(message);
+      console.error('Password reset failed:', error);
+      setUserAuthMessage('Could not send reset instructions. Check the email and try again.');
     }
-  }
+  });
 
-  async function handleAdminLogout() {
+  els.userAccountBtn.addEventListener('click', () => {
+    const open = els.userAccountBtn.getAttribute('aria-expanded') === 'true';
+    els.userAccountBtn.setAttribute('aria-expanded', String(!open));
+    els.userAccountDropdown.classList.toggle('hidden', open);
+  });
+
+  els.userSignOutBtn.addEventListener('click', async () => {
+    els.userAccountDropdown.classList.add('hidden');
+    els.userAccountBtn.setAttribute('aria-expanded', 'false');
     if (!auth) return;
-    try { await signOut(auth); notify('Signed out of admin mode.'); }
-    catch (error) { console.error('Sign-out failed:', error); notify('Could not sign out. Please refresh the page.'); }
-  }
-
-  // GNS Class Library: User Email Login and Registration
-let userAuthMode = 'login';
-
-const userAuthModal = document.getElementById('userAuthModal');
-const userAuthBtn = document.getElementById('userAuthBtn');
-const userAuthForm = document.getElementById('userAuthForm');
-const userAuthTitle = document.getElementById('userAuthTitle');
-const userAuthSubmit = document.getElementById('userAuthSubmit');
-const userAuthToggle = document.getElementById('userAuthToggle');
-const userAuthClose = document.getElementById('userAuthClose');
-const userAuthReset = document.getElementById('userAuthReset');
-const userAuthMessage = document.getElementById('userAuthMessage');
-const userAuthEmail = document.getElementById('userAuthEmail');
-const userAuthPassword = document.getElementById('userAuthPassword');
-
-function setUserAuthMode(mode) {
-  userAuthMode = mode;
-  userAuthTitle.textContent =
-    mode === 'register' ? 'Create your account' : 'Login';
-
-  userAuthSubmit.textContent =
-    mode === 'register' ? 'Register' : 'Login';
-
-  userAuthToggle.textContent =
-    mode === 'register'
-      ? 'Already have an account? Login'
-      : 'Create a new account';
-
-  userAuthPassword.autocomplete =
-    mode === 'register' ? 'new-password' : 'current-password';
-
-  userAuthMessage.textContent = '';
-}
-
-userAuthBtn?.addEventListener('click', () => {
-  setUserAuthMode('login');
-  userAuthModal.classList.remove('hidden');
-});
-
-userAuthToggle?.addEventListener('click', () => {
-  setUserAuthMode(
-    userAuthMode === 'login' ? 'register' : 'login'
-  );
-});
-
-userAuthClose?.addEventListener('click', () => {
-  userAuthModal.classList.add('hidden');
-});
-
-userAuthForm?.addEventListener('submit', async (event) => {
-  event.preventDefault();
-
-  if (!firebaseConfigured || !auth) {
-    userAuthMessage.textContent =
-      'Firebase setup is required before signing in.';
-    return;
-  }
-
-  const email = userAuthEmail.value.trim();
-  const password = userAuthPassword.value;
-
-  userAuthSubmit.disabled = true;
-  userAuthMessage.textContent = '';
-
-  try {
-    if (userAuthMode === 'register') {
-      await createUserWithEmailAndPassword(
-        auth,
-        email,
-        password
-      );
-      notify('Account created successfully.');
-    } else {
-      await signInWithEmailAndPassword(
-        auth,
-        email,
-        password
-      );
-      notify('Login successful.');
+    try {
+      await signOut(auth);
+      notify('You have signed out.');
+    } catch (error) {
+      console.error('Sign-out failed:', error);
+      notify('Could not sign out. Please try again.');
     }
+  });
 
-    userAuthModal.classList.add('hidden');
-    userAuthForm.reset();
-  } catch (error) {
-    console.error('User authentication failed:', error);
+  document.addEventListener('click', (event) => {
+    if (!els.userAccountWrap.contains(event.target)) {
+      els.userAccountDropdown.classList.add('hidden');
+      els.userAccountBtn.setAttribute('aria-expanded', 'false');
+    }
+  });
 
-    const messages = {
-      'auth/email-already-in-use':
-        'This email already has an account. Please log in.',
-      'auth/invalid-email':
-        'Please enter a valid email address.',
-      'auth/weak-password':
-        'Choose a stronger password with at least 6 characters.',
-      'auth/invalid-credential':
-        'Email or password is incorrect.',
-      'auth/user-disabled':
-        'This account has been disabled.',
-      'auth/too-many-requests':
-        'Too many attempts. Please try again later.'
-    };
+  document.querySelectorAll('[data-page-target]').forEach((link) => {
+    link.addEventListener('click', (event) => {
+      event.preventDefault();
+      navigateTo(link.dataset.pageTarget);
+      const mobileMenu = document.getElementById('mobileMenu');
+      mobileMenu?.setAttribute('aria-expanded', 'false');
+      document.querySelector('.main-nav')?.classList.remove('menu-open');
+      if (document.querySelector('.main-nav')) document.querySelector('.main-nav').style.display = '';
+    });
+  });
 
-    userAuthMessage.textContent =
-      messages[error.code] ||
-      'Could not sign in. Please check your connection and try again.';
-  } finally {
-    userAuthSubmit.disabled = false;
-  }
-});
+  window.addEventListener('popstate', () => {
+    const target = String(location.hash || '#top').slice(1);
+    if (target === 'about' || target === 'top') {
+      pendingPageAfterAuth = null;
+      showPage(target === 'top' ? 'home' : 'about', { push: false, scroll: true });
+    } else if (target === 'library' || target === 'subjects') {
+      if (!currentUser) {
+        pendingPageAfterAuth = target;
+        openUserAuthModal('login', target, true);
+      } else {
+        showPage(target, { push: false, scroll: true });
+      }
+    }
+  });
 
-userAuthReset?.addEventListener('click', async () => {
-  if (!firebaseConfigured || !auth) {
-    userAuthMessage.textContent = 'Firebase setup is required.';
-    return;
-  }
+  userAuthModal.addEventListener('click', (event) => {
+    if (event.target === userAuthModal) closeUserAuthModal();
+  });
 
-  const email = userAuthEmail.value.trim();
-
-  if (!email) {
-    userAuthMessage.textContent =
-      'Enter your email address first.';
-    return;
-  }
-
-  try {
-    await sendPasswordResetEmail(auth, email);
-    userAuthMessage.textContent =
-      'Password reset instructions have been sent if the account exists.';
-  } catch (error) {
-    console.error('Password reset failed:', error);
-    userAuthMessage.textContent =
-      'Could not send the reset email. Check the email address and try again.';
-  }
-});
-  els.adminLoginBtn.addEventListener('click', handleAdminLogin);
-  els.adminLogoutBtn.addEventListener('click', handleAdminLogout);
   document.getElementById('openAddModal').addEventListener('click', () => openAddModal());
   ['heroAddBtn', 'sectionAddBtn', 'emptyAddBtn', 'subjectsAddBtn'].forEach((id) => document.getElementById(id)?.addEventListener('click', () => openAddModal()));
   document.querySelectorAll('[data-close-modal]').forEach((button) => button.addEventListener('click', () => closeModal(els.addModal)));
@@ -998,10 +1182,15 @@ if (playButton) {
   });
   document.querySelectorAll('[data-quick-subject]').forEach((button) => button.addEventListener('click', () => {
     const subject = button.dataset.quickSubject;
-    selectedSubject = subject === 'Other' ? 'Other' : subject;
     onlySaved = false;
+    if (!currentUser) {
+      pendingSubjectAfterAuth = subject;
+      navigateTo('library');
+      return;
+    }
+    selectedSubject = subject;
+    navigateTo('library');
     render();
-    document.getElementById('library').scrollIntoView({ behavior: 'smooth', block: 'start' });
   }));
   els.importFile.addEventListener('change', () => importLibraryFile(els.importFile.files?.[0]));
 
@@ -1012,10 +1201,7 @@ if (playButton) {
     document.querySelector('.main-nav').classList.toggle('menu-open', !isOpen);
     document.querySelector('.main-nav').style.display = isOpen ? '' : 'flex';
   });
-  document.querySelectorAll('.main-nav a').forEach((link) => link.addEventListener('click', () => {
-    mobileMenu.setAttribute('aria-expanded', 'false');
-    document.querySelector('.main-nav').style.display = '';
-  }));
+
 
   [els.addModal, els.playerModal].forEach((modal) => modal.addEventListener('click', (event) => {
     if (event.target === modal) modal === els.playerModal ? closePlayer() : closeModal(modal);
@@ -1024,6 +1210,7 @@ if (playButton) {
     if (event.key === 'Escape') {
       if (!els.playerModal.classList.contains('hidden')) closePlayer();
       else if (!els.addModal.classList.contains('hidden')) closeModal(els.addModal);
+      else if (!userAuthModal.classList.contains('hidden')) closeUserAuthModal();
     }
     if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') { event.preventDefault(); els.search.focus(); }
   });
@@ -1035,7 +1222,17 @@ if (playButton) {
     }
   });
   document.getElementById('yearNow').textContent = String(new Date().getFullYear());
+  document.body.dataset.activePage = 'home';
   applyAdminControls();
   render();
+
+  const initialTarget = String(location.hash || '#top').slice(1);
+  if (initialTarget === 'about') {
+    showPage('about', { push: false, scroll: false });
+  } else if (initialTarget === 'library' || initialTarget === 'subjects') {
+    pendingPageAfterAuth = initialTarget;
+    pendingFromInitialHash = true;
+  }
+
   initializeAdminAccess();
 })();
