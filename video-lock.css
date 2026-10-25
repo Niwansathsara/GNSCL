@@ -70,3 +70,8 @@
     letter-spacing: 1px;
   }
 }
+
+/* Keep the video password window above playlist windows */
+#videoPasswordModal {
+  z-index: 2147483646 !important;
+}
