@@ -2512,3 +2512,42 @@ body[data-active-page="about"] .gns-home-reveal {
     min-width: 0 !important;
   }
 }
+
+/* MOBILE ONLY — keep desktop design unchanged */
+@media screen and (max-width: 650px) {
+
+  #videoGrid .video-card {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: flex-start !important;
+    gap: 10px !important;
+  }
+
+  #videoGrid .video-thumbnail {
+    flex: 0 0 112px !important;
+    width: 112px !important;
+    height: 76px !important;
+    min-height: 76px !important;
+    aspect-ratio: auto !important;
+    overflow: hidden !important;
+    position: relative !important;
+  }
+
+  #videoGrid .video-thumbnail > img {
+    display: block !important;
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+  }
+
+  #videoGrid .video-thumbnail .thumb-subject-art {
+    width: 100% !important;
+    height: 100% !important;
+  }
+
+  #videoGrid .video-card-body {
+    flex: 1 1 auto !important;
+    width: 0 !important;
+    min-width: 0 !important;
+  }
+}
