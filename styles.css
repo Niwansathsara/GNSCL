@@ -2218,3 +2218,238 @@ body[data-active-page="about"] .gns-home-reveal {
   outline: 2px solid #5269e8;
   outline-offset: 2px;
 }
+
+/* ==========================================
+   GNS CLASS LIBRARY
+   MOBILE LIST LAYOUT ONLY
+   Existing windows and names remain unchanged
+   ========================================== */
+
+@media screen and (max-width: 650px) {
+
+  /* Main Playlist, Playlist and their existing lists */
+  #videoGrid .playlist-catalog-grid,
+  #videoGrid .playlist-view-grid {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 12px !important;
+    width: 100% !important;
+  }
+
+  /* Main Playlist cards and Playlist cards */
+  #videoGrid .playlist-catalog-card {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 12px !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    padding: 10px !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Small preview on the left */
+  #videoGrid .playlist-catalog-preview {
+    position: relative !important;
+    display: block !important;
+    flex: 0 0 112px !important;
+    width: 112px !important;
+    min-width: 112px !important;
+    height: 72px !important;
+    min-height: 72px !important;
+    overflow: hidden !important;
+    border-radius: 8px !important;
+  }
+
+  #videoGrid .playlist-catalog-preview img,
+  #videoGrid .playlist-catalog-preview .thumb-subject-art {
+    display: block !important;
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+  }
+
+  /* Details on the right */
+  #videoGrid .playlist-catalog-info {
+    flex: 1 1 auto !important;
+    width: 0 !important;
+    min-width: 0 !important;
+    padding: 0 !important;
+    text-align: left !important;
+  }
+
+  #videoGrid .playlist-catalog-title {
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 0 8px !important;
+    padding: 0 !important;
+    text-align: left !important;
+    overflow-wrap: anywhere !important;
+    line-height: 1.35 !important;
+  }
+
+  #videoGrid .playlist-catalog-footer {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 6px !important;
+    width: 100% !important;
+  }
+
+  #videoGrid .playlist-catalog-preview-overlay {
+    font-size: 10px !important;
+    padding: 4px !important;
+  }
+
+  /* Video list inside the existing Playlist window */
+  #videoGrid .playlist-view-grid .video-card {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 10px !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    height: auto !important;
+    min-height: 0 !important;
+    padding: 8px !important;
+    box-sizing: border-box !important;
+  }
+
+  #videoGrid .playlist-view-grid .video-thumbnail {
+    position: relative !important;
+    flex: 0 0 112px !important;
+    width: 112px !important;
+    min-width: 112px !important;
+    height: 72px !important;
+    min-height: 72px !important;
+    aspect-ratio: auto !important;
+    overflow: hidden !important;
+    border-radius: 8px !important;
+  }
+
+  #videoGrid .playlist-view-grid .video-thumbnail img,
+  #videoGrid .playlist-view-grid .video-thumbnail .thumb-subject-art {
+    display: block !important;
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+  }
+
+  #videoGrid .playlist-view-grid .video-card-body {
+    flex: 1 1 auto !important;
+    width: 0 !important;
+    min-width: 0 !important;
+    padding: 0 !important;
+    text-align: left !important;
+  }
+
+  #videoGrid .playlist-view-grid .video-title {
+    display: -webkit-box !important;
+    -webkit-box-orient: vertical !important;
+    -webkit-line-clamp: 2 !important;
+    overflow: hidden !important;
+    margin: 4px 0 !important;
+    font-size: 13px !important;
+    line-height: 1.35 !important;
+    overflow-wrap: anywhere !important;
+  }
+
+  #videoGrid .playlist-view-grid .video-description {
+    display: -webkit-box !important;
+    -webkit-box-orient: vertical !important;
+    -webkit-line-clamp: 2 !important;
+    overflow: hidden !important;
+    margin: 3px 0 !important;
+    font-size: 11px !important;
+    line-height: 1.35 !important;
+  }
+
+  #videoGrid .playlist-view-grid .card-meta {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 4px !important;
+    font-size: 10px !important;
+  }
+
+  #videoGrid .playlist-view-grid .card-bottom {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 5px !important;
+    margin-top: 6px !important;
+  }
+
+  #videoGrid .playlist-view-grid .teacher-avatar {
+    display: none !important;
+  }
+
+  #videoGrid .playlist-view-grid .teacher-name {
+    font-size: 10px !important;
+  }
+
+  #videoGrid .playlist-view-grid .card-play-link {
+    font-size: 11px !important;
+    padding: 5px 7px !important;
+  }
+
+  #videoGrid .playlist-view-grid .video-top-badges {
+    gap: 3px !important;
+  }
+
+  #videoGrid .playlist-view-grid .category-badge {
+    font-size: 8px !important;
+    padding: 3px 4px !important;
+  }
+
+  #videoGrid .playlist-view-grid .bookmark-button {
+    width: 23px !important;
+    height: 23px !important;
+    min-width: 23px !important;
+  }
+
+  /* Keep the existing window names and close buttons unchanged */
+  #videoGrid .subject-playlists-header,
+  #videoGrid .playlist-view-header {
+    flex-direction: row !important;
+    align-items: flex-start !important;
+    gap: 8px !important;
+  }
+
+  #videoGrid .subject-playlists-header > div,
+  #videoGrid .playlist-view-header > div {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+  }
+
+  #videoGrid .subject-playlists-close,
+  #videoGrid .playlist-view-close {
+    flex: 0 0 auto !important;
+    white-space: nowrap !important;
+  }
+
+  /* Library's main video list: compact rows */
+  #videoGrid > .playlist-catalog-root > .playlist-catalog-grid
+    .playlist-catalog-card {
+    max-width: 100% !important;
+  }
+}
+
+@media screen and (max-width: 380px) {
+  #videoGrid .playlist-catalog-preview,
+  #videoGrid .playlist-view-grid .video-thumbnail {
+    flex-basis: 96px !important;
+    width: 96px !important;
+    min-width: 96px !important;
+    height: 64px !important;
+    min-height: 64px !important;
+  }
+
+  #videoGrid .playlist-catalog-card,
+  #videoGrid .playlist-view-grid .video-card {
+    gap: 8px !important;
+    padding: 7px !important;
+  }
+}
