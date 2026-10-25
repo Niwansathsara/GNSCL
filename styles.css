@@ -2453,3 +2453,62 @@ body[data-active-page="about"] .gns-home-reveal {
     padding: 7px !important;
   }
 }
+
+/* Mobile playlist preview fix */
+@media screen and (max-width: 650px) {
+  #videoGrid .playlist-catalog-card {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 12px !important;
+    text-align: left !important;
+  }
+
+  #videoGrid .playlist-catalog-preview {
+    flex: 0 0 105px !important;
+    width: 105px !important;
+    height: 70px !important;
+    min-height: 70px !important;
+    overflow: hidden !important;
+    border-radius: 8px !important;
+  }
+
+  #videoGrid .playlist-catalog-preview img {
+    display: block !important;
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+  }
+
+  #videoGrid .playlist-catalog-info {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+  }
+
+  #videoGrid .video-card {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 10px !important;
+  }
+
+  #videoGrid .video-thumbnail {
+    flex: 0 0 112px !important;
+    width: 112px !important;
+    height: 72px !important;
+    aspect-ratio: auto !important;
+    overflow: hidden !important;
+  }
+
+  #videoGrid .video-thumbnail img,
+  #videoGrid .video-thumbnail iframe {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+  }
+
+  #videoGrid .video-card-body {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+  }
+}
