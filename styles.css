@@ -2606,3 +2606,44 @@ body[data-active-page="about"] .gns-home-reveal {
     height: 100% !important;
   }
 }
+
+/* Mobile only: Fix Main Playlist and Playlist previews */
+@media screen and (max-width: 650px) {
+
+  /* Main Playlist preview images */
+  .playlist-catalog-preview > img:not(.hidden) {
+    display: block !important;
+    position: absolute !important;
+    inset: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    z-index: 1 !important;
+  }
+
+  /* Do not let the hidden subject icon cover the thumbnail */
+  .playlist-catalog-preview > .thumb-subject-art.hidden {
+    display: none !important;
+  }
+
+  /* Video previews inside an opened Playlist */
+  .playlist-view-dialog .video-thumbnail {
+    position: relative !important;
+    overflow: hidden !important;
+  }
+
+  .playlist-view-dialog .video-thumbnail > img:not(.hidden) {
+    display: block !important;
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+
+  .playlist-view-dialog .video-thumbnail > .thumb-subject-art.hidden {
+    display: none !important;
+  }
+}
