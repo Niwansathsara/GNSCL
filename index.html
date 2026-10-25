@@ -346,5 +346,122 @@
   targets.forEach(element => observer.observe(element));
 })();
 </script>
+  <script>
+(() => {
+  const desktop = window.matchMedia(
+    "(min-width: 769px) and (hover: hover) and (pointer: fine)"
+  );
+
+  const reducedMotion = window.matchMedia(
+    "(prefers-reduced-motion: reduce)"
+  );
+
+  if (!desktop.matches || reducedMotion.matches) return;
+
+  let currentY = window.scrollY;
+  let targetY = currentY;
+  let animationFrame = 0;
+
+  function animateScroll() {
+    const difference = targetY - currentY;
+
+    currentY += difference * 0.20;
+
+    if (Math.abs(difference) < 0.8) {
+      currentY = targetY;
+      animationFrame = 0;
+      window.scrollTo({
+        top: currentY,
+        behavior: "instant"
+      });
+      return;
+    }
+
+    window.scrollTo({
+      top: currentY,
+      behavior: "instant"
+    });
+
+    animationFrame = requestAnimationFrame(animateScroll);
+  }
+
+  function onWheel(event) {
+    if (
+      !desktop.matches ||
+      reducedMotion.matches ||
+      event.ctrlKey ||
+      event.shiftKey ||
+      event.deltaY === 0
+    ) return;
+
+    if (
+      event.target.closest(
+        "input, textarea, select, [contenteditable='true']"
+      ) ||
+      document.querySelector(
+        ".modal-backdrop:not(.hidden), dialog[open]"
+      )
+    ) return;
+
+    let element = event.target instanceof Element
+      ? event.target
+      : null;
+
+    while (
+      element &&
+      element !== document.body &&
+      element !== document.documentElement
+    ) {
+      const style = getComputedStyle(element);
+      const canScroll = /auto|scroll/.test(style.overflowY);
+
+      if (
+        canScroll &&
+        element.scrollHeight > element.clientHeight + 1
+      ) {
+        const canContinue =
+          event.deltaY < 0
+            ? element.scrollTop > 0
+            : element.scrollTop + element.clientHeight <
+              element.scrollHeight - 1;
+
+        if (canContinue) return;
+      }
+
+      element = element.parentElement;
+    }
+
+    let delta = event.deltaY;
+
+    if (event.deltaMode === 1) delta *= 16;
+    if (event.deltaMode === 2) delta *= window.innerHeight;
+
+    event.preventDefault();
+
+    if (!animationFrame) {
+      currentY = window.scrollY;
+      targetY = currentY;
+    }
+
+    const maxScroll = Math.max(
+      0,
+      document.documentElement.scrollHeight - window.innerHeight
+    );
+
+    targetY = Math.max(
+      0,
+      Math.min(maxScroll, targetY + delta)
+    );
+
+    if (!animationFrame) {
+      animationFrame = requestAnimationFrame(animateScroll);
+    }
+  }
+
+  window.addEventListener("wheel", onWheel, {
+    passive: false
+  });
+})();
+</script>
 </body>
 </html>
