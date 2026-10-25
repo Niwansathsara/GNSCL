@@ -256,5 +256,87 @@
     </section>
   </div>
   <script type="module" src="app.js"></script>
+  <script>
+(() => {
+  const selectors = [
+    ".site-header",
+    ".hero-visual",
+    ".hero-bottom-note",
+    ".quick-stats .stat-item",
+    ".quick-stats .stat-footnote",
+    ".member-stats-heading",
+    ".member-stat-card",
+    ".member-stats-note",
+    ".site-footer .footer-inner",
+    ".site-footer .permission-note"
+  ];
+
+  const targets = [
+    ...new Set(
+      selectors.flatMap(selector =>
+        [...document.querySelectorAll(selector)]
+      )
+    )
+  ];
+
+  const reducedMotion = window.matchMedia(
+    "(prefers-reduced-motion: reduce)"
+  ).matches;
+
+  function reveal(element) {
+    element.addEventListener("animationend", () => {
+      if (reducedMotion) return;
+
+      element.animate(
+        [
+          { translate: "0 0" },
+          { translate: "0 -1.5px" },
+          { translate: "0 0" }
+        ],
+        {
+          duration: 3800,
+          easing: "ease-in-out",
+          iterations: Infinity
+        }
+      );
+    }, { once: true });
+
+    element.classList.add("is-revealed");
+  }
+
+  targets.forEach((element, index) => {
+    element.classList.add("gns-home-reveal");
+    element.style.setProperty(
+      "--gns-reveal-delay",
+      `${Math.min(index * 65, 325)}ms`
+    );
+  });
+
+  if (
+    reducedMotion ||
+    !("IntersectionObserver" in window)
+  ) {
+    targets.forEach(reveal);
+    return;
+  }
+
+  const observer = new IntersectionObserver(
+    (entries, currentObserver) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          reveal(entry.target);
+          currentObserver.unobserve(entry.target);
+        }
+      });
+    },
+    {
+      threshold: 0.12,
+      rootMargin: "0px 0px -25px 0px"
+    }
+  );
+
+  targets.forEach(element => observer.observe(element));
+})();
+</script>
 </body>
 </html>
