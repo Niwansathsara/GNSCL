@@ -2150,3 +2150,13 @@ body[data-active-page="library"] #library { min-height: 60vh; }
       both !important;
   }
 }
+/* Prevent the page from shifting when scrolling */
+html {
+  scrollbar-gutter: stable;
+}
+
+@supports not (scrollbar-gutter: stable) {
+  html {
+    overflow-y: scroll;
+  }
+}
