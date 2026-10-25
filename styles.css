@@ -2662,3 +2662,16 @@ body[data-active-page="about"] .gns-home-reveal {
     backface-visibility: hidden;
   }
 }
+
+/* GNS Class Library — desktop video smoothness */
+@media screen and (min-width: 651px) {
+  .player-frame-wrap {
+    isolation: isolate;
+  }
+
+  .player-frame-wrap iframe {
+    transform: translate3d(0, 0, 0);
+    backface-visibility: hidden;
+    will-change: transform;
+  }
+}
