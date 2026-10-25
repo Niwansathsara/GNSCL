@@ -2218,3 +2218,129 @@ body[data-active-page="about"] .gns-home-reveal {
   outline: 2px solid #5269e8;
   outline-offset: 2px;
 }
+/* =========================================
+   GNS CLASS LIBRARY
+   MOBILE COMPACT HORIZONTAL LIST
+   Desktop design remains unchanged
+   ========================================= */
+
+@media screen and (max-width: 650px) {
+
+  /* Playlist cards: small preview left, details right */
+  .playlist-card,
+  .playlist-item,
+  .playlist-tile {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 12px !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    padding: 10px !important;
+    text-align: left !important;
+  }
+
+  .playlist-card img,
+  .playlist-item img,
+  .playlist-tile img {
+    width: 86px !important;
+    height: 64px !important;
+    flex: 0 0 86px !important;
+    object-fit: cover !important;
+    border-radius: 8px !important;
+  }
+
+  .playlist-card > div,
+  .playlist-item > div,
+  .playlist-tile > div {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+  }
+
+  /* Video rows: thumbnail on left, information on right */
+  .video-card,
+  .video-item,
+  .video-row,
+  .lesson-card {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 12px !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    padding: 10px !important;
+    text-align: left !important;
+  }
+
+  .video-card img,
+  .video-item img,
+  .video-row img,
+  .lesson-card img {
+    width: 96px !important;
+    height: 68px !important;
+    flex: 0 0 96px !important;
+    object-fit: cover !important;
+    border-radius: 8px !important;
+  }
+
+  .video-card > div,
+  .video-item > div,
+  .video-row > div,
+  .lesson-card > div {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+  }
+
+  /* Keep titles and descriptions inside the right column */
+  .playlist-card h1,
+  .playlist-card h2,
+  .playlist-card h3,
+  .playlist-item h1,
+  .playlist-item h2,
+  .playlist-item h3,
+  .video-card h1,
+  .video-card h2,
+  .video-card h3,
+  .video-item h1,
+  .video-item h2,
+  .video-item h3,
+  .video-row h1,
+  .video-row h2,
+  .video-row h3,
+  .lesson-card h1,
+  .lesson-card h2,
+  .lesson-card h3 {
+    overflow-wrap: anywhere !important;
+    margin-top: 0 !important;
+  }
+
+  /* Prevent horizontal overflow */
+  .playlist-card *,
+  .playlist-item *,
+  .playlist-tile *,
+  .video-card *,
+  .video-item *,
+  .video-row *,
+  .lesson-card * {
+    max-width: 100%;
+  }
+}
+
+@media screen and (max-width: 380px) {
+  .playlist-card img,
+  .playlist-item img,
+  .playlist-tile img {
+    width: 72px !important;
+    height: 56px !important;
+    flex-basis: 72px !important;
+  }
+
+  .video-card img,
+  .video-item img,
+  .video-row img,
+  .lesson-card img {
+    width: 78px !important;
+    height: 58px !important;
+    flex-basis: 78px !important;
+  }
+}
