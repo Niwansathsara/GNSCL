@@ -256,10 +256,10 @@
     </section>
   </div>
   <script type="module" src="app.js"></script>
-  <script>
+<script>
 (() => {
   const selectors = [
-    ".site-header",
+    ".hero-copy",
     ".hero-visual",
     ".hero-bottom-note",
     ".quick-stats .stat-item",
@@ -267,6 +267,19 @@
     ".member-stats-heading",
     ".member-stat-card",
     ".member-stats-note",
+    "#library .section-heading",
+    "#library .library-toolbar",
+    "#library .filter-row",
+    "#library .result-line",
+    "#library .video-grid",
+    "#library .empty-state",
+    "#subjects .subjects-copy",
+    "#subjects .subject-card",
+    "#about .about-intro-card",
+    "#about .about-free-card",
+    "#about .about-rights-notice",
+    "#about .about-al-guide",
+    "#about .about-section",
     ".site-footer .footer-inner",
     ".site-footer .permission-note"
   ];
@@ -279,30 +292,9 @@
     )
   ];
 
-  const reducedMotion = window.matchMedia(
+  const reduceMotion = window.matchMedia(
     "(prefers-reduced-motion: reduce)"
   ).matches;
-
-  function reveal(element) {
-    element.addEventListener("animationend", () => {
-      if (reducedMotion) return;
-
-      element.animate(
-        [
-          { translate: "0 0" },
-          { translate: "0 -1.5px" },
-          { translate: "0 0" }
-        ],
-        {
-          duration: 3800,
-          easing: "ease-in-out",
-          iterations: Infinity
-        }
-      );
-    }, { once: true });
-
-    element.classList.add("is-revealed");
-  }
 
   targets.forEach((element, index) => {
     element.classList.add("gns-home-reveal");
@@ -313,19 +305,35 @@
   });
 
   if (
-    reducedMotion ||
+    reduceMotion ||
     !("IntersectionObserver" in window)
   ) {
-    targets.forEach(reveal);
+    targets.forEach(element =>
+      element.classList.add("is-revealed")
+    );
     return;
   }
 
+  function reveal(element) {
+    element.classList.remove("is-revealed");
+    void element.offsetWidth;
+    element.classList.add("is-revealed");
+  }
+
   const observer = new IntersectionObserver(
-    (entries, currentObserver) => {
+    entries => {
       entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          reveal(entry.target);
-          currentObserver.unobserve(entry.target);
+        if (
+          entry.isIntersecting &&
+          entry.intersectionRatio >= 0.12
+        ) {
+          if (
+            !entry.target.classList.contains("is-revealed")
+          ) {
+            reveal(entry.target);
+          }
+        } else if (!entry.isIntersecting) {
+          entry.target.classList.remove("is-revealed");
         }
       });
     },
