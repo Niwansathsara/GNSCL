@@ -65,6 +65,11 @@ import { firebaseConfig, adminEmail } from "./firebase-config.js";
     formError: document.getElementById('formError'),
     playerModal: document.getElementById('playerModal'),
     videoFrame: document.getElementById('videoFrame'),
+    videoPasswordModal: document.getElementById('videoPasswordModal'),
+    videoPasswordForm: document.getElementById('videoPasswordForm'),
+    videoUnlockPassword: document.getElementById('videoUnlockPassword'),
+    videoPasswordError: document.getElementById('videoPasswordError'),
+    videoPasswordVideoTitle: document.getElementById('videoPasswordVideoTitle'),
     toast: document.getElementById('toast'),
     toastText: document.getElementById('toastText'),
     importFile: document.getElementById('importFile'),
@@ -103,6 +108,7 @@ import { firebaseConfig, adminEmail } from "./firebase-config.js";
   let onlySaved = false;
   let toastTimer;
   let lastFocus = null;
+  let pendingPasswordVideo = null;
   let currentPage = 'home';
   let activeNavTarget = 'home';
   let pendingPageAfterAuth = null;
@@ -462,6 +468,10 @@ const mainPlaylist = (() => {
     .trim().slice(0, 80) || 'General videos';
 
   const url = String(input.url || '').trim();
+  const passwordSalt = String(input.passwordSalt || '').trim().toLowerCase();
+  const passwordHash = String(input.passwordHash || '').trim().toLowerCase();
+  const hasValidPasswordLock = /^[a-f0-9]{32}$/.test(passwordSalt)
+    && /^[a-f0-9]{64}$/.test(passwordHash);
 
   if (!title || !isValidYouTubeUrl(url)) return null;
 
@@ -470,16 +480,57 @@ const mainPlaylist = (() => {
     title,
     subject,
     mainPlaylist,
-    playlist,  
+    playlist,
     teacher: String(input.teacher || '').trim().slice(0, 80),
     url,
     description: String(input.description || '').trim().slice(0, 180),
-    createdAt: Number(input.createdAt) || Date.now()
+    createdAt: Number(input.createdAt) || Date.now(),
+    ...(hasValidPasswordLock ? { passwordSalt, passwordHash } : {})
   };
 }
 
   function makeId() {
     return `gns-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+  }
+
+  function createVideoPasswordSalt() {
+    return Array.from(crypto.getRandomValues(new Uint8Array(16)))
+      .map((byte) => byte.toString(16).padStart(2, '0'))
+      .join('');
+  }
+
+  async function hashVideoPassword(password, saltHex) {
+    const keyMaterial = await crypto.subtle.importKey(
+      'raw',
+      new TextEncoder().encode(password),
+      'PBKDF2',
+      false,
+      ['deriveBits']
+    );
+    const bits = await crypto.subtle.deriveBits({
+      name: 'PBKDF2',
+      salt: new TextEncoder().encode(saltHex),
+      iterations: 120000,
+      hash: 'SHA-256'
+    }, keyMaterial, 256);
+    return Array.from(new Uint8Array(bits))
+      .map((byte) => byte.toString(16).padStart(2, '0'))
+      .join('');
+  }
+
+  function passwordHashesMatch(actual, expected) {
+    if (typeof actual !== 'string' || typeof expected !== 'string' || actual.length !== expected.length) return false;
+    let difference = 0;
+    for (let i = 0; i < actual.length; i += 1) {
+      difference |= actual.charCodeAt(i) ^ expected.charCodeAt(i);
+    }
+    return difference === 0;
+  }
+
+
+  function hasVideoPasswordLock(video) {
+    return /^[a-f0-9]{32}$/i.test(String(video?.passwordSalt || ''))
+      && /^[a-f0-9]{64}$/i.test(String(video?.passwordHash || ''));
   }
 
   function getYoutubeId(url) {
@@ -509,10 +560,19 @@ const mainPlaylist = (() => {
   function thumbnailMarkup(video) {
     const videoId = getYoutubeId(video.url);
     const art = getArt(video.subject);
+    const locked = hasVideoPasswordLock(video);
+    const blurredClass = locked ? ' video-password-locked-media' : '';
+    const lockOverlay = locked ? `
+      <span class="video-password-lock-overlay" aria-hidden="true">
+        <span class="video-password-lock-icon">🔒</span>
+        <span class="video-password-lock-label">PASSWORD LOCKED</span>
+      </span>
+    ` : '';
+
     if (videoId) {
-      return `<img loading="lazy" src="https://img.youtube.com/vi/${encodeURIComponent(videoId)}/hqdefault.jpg" alt="" onerror="this.classList.add('hidden');this.nextElementSibling.classList.remove('hidden')" /><div class="thumb-subject-art ${art.cls} fallback-art hidden"><span class="thumb-equation">${safeText(art.symbol)}</span></div>`;
+      return `<img class="${locked ? 'video-password-locked-media' : ''}" loading="lazy" src="https://img.youtube.com/vi/${encodeURIComponent(videoId)}/hqdefault.jpg" alt="" onerror="this.classList.add('hidden');this.nextElementSibling.classList.remove('hidden')" /><div class="thumb-subject-art ${art.cls} fallback-art hidden${blurredClass}"><span class="thumb-equation">${safeText(art.symbol)}</span></div>${lockOverlay}`;
     }
-    return `<div class="thumb-subject-art ${art.cls}"><span class="thumb-equation">${safeText(art.symbol)}</span></div>`;
+    return `<div class="thumb-subject-art ${art.cls}${blurredClass}"><span class="thumb-equation">${safeText(art.symbol)}</span></div>${lockOverlay}`;
   }
 
   function renderVideoCard(video, index) {
@@ -525,7 +585,7 @@ const mainPlaylist = (() => {
     const sourceBadge = video.isLocal ? '<span class="local-tag">LOCAL DRAFT</span>' : '';
     const localDelete = isAdmin ? `<button class="delete-local" data-delete="${safeText(video.id)}" type="button">Remove video</button>` : '';
     return `<article class="video-card" style="animation-delay:${Math.min(index * 45, 240)}ms">
-      <div class="video-thumbnail" data-play="${safeText(video.id)}" aria-label="Play ${safeText(video.title)}">
+      <div class="video-thumbnail${hasVideoPasswordLock(video) ? ' has-video-password-lock' : ''}" data-play="${safeText(video.id)}" aria-label="Play ${safeText(video.title)}">
         ${thumbnailMarkup(video)}
         <span class="thumb-overlay"><span class="thumb-play">▶</span></span>
         <span class="video-top-badges"><span class="category-badge">${safeText(subject.toUpperCase())}</span><button class="bookmark-button ${isSaved ? 'saved' : ''}" data-save="${safeText(video.id)}" type="button" aria-label="${isSaved ? 'Remove saved video' : 'Save video'}" aria-pressed="${isSaved}">${isSaved ? '♥' : '♡'}</button></span>
@@ -881,8 +941,76 @@ const mainName = (() => {
 
   function closeModal(modal) {
     modal.classList.add('hidden');
-    if (els.addModal.classList.contains('hidden') && els.playerModal.classList.contains('hidden')) document.body.style.overflow = '';
+    if (els.addModal.classList.contains('hidden') && els.playerModal.classList.contains('hidden')
+      && els.videoPasswordModal.classList.contains('hidden')) document.body.style.overflow = '';
     if (lastFocus && typeof lastFocus.focus === 'function') lastFocus.focus();
+  }
+
+  function requestVideoPlayback(video) {
+    if (!hasVideoPasswordLock(video)) {
+      openPlayer(video);
+      return;
+    }
+
+    lastFocus = document.activeElement;
+    pendingPasswordVideo = video;
+    els.videoUnlockPassword.value = '';
+    els.videoPasswordError.textContent = '';
+    els.videoPasswordError.classList.add('hidden');
+    els.videoPasswordVideoTitle.textContent = video.title || 'Class video';
+    els.videoPasswordModal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+    setTimeout(() => els.videoUnlockPassword.focus(), 25);
+  }
+
+  function closeVideoPasswordModal(keepScrollLocked = false) {
+    els.videoPasswordModal.classList.add('hidden');
+    els.videoPasswordForm.reset();
+    els.videoPasswordError.textContent = '';
+    els.videoPasswordError.classList.add('hidden');
+    pendingPasswordVideo = null;
+    if (!keepScrollLocked && els.addModal.classList.contains('hidden')
+      && els.playerModal.classList.contains('hidden')) document.body.style.overflow = '';
+    if (lastFocus && typeof lastFocus.focus === 'function') lastFocus.focus();
+  }
+
+  async function unlockVideo(event) {
+    event.preventDefault();
+    const video = pendingPasswordVideo;
+    if (!video) return;
+
+    const enteredPassword = String(els.videoUnlockPassword.value || '');
+    if (!enteredPassword) {
+      els.videoPasswordError.textContent = 'Enter the password for this video.';
+      els.videoPasswordError.classList.remove('hidden');
+      els.videoUnlockPassword.focus();
+      return;
+    }
+
+    const submitButton = els.videoPasswordForm.querySelector('button[type="submit"]');
+    const originalButtonText = submitButton.innerHTML;
+    submitButton.disabled = true;
+    submitButton.textContent = 'Checking…';
+
+    try {
+      const enteredHash = await hashVideoPassword(enteredPassword, video.passwordSalt);
+      if (!passwordHashesMatch(enteredHash, video.passwordHash)) {
+        els.videoPasswordError.textContent = 'That password is incorrect. Please try again.';
+        els.videoPasswordError.classList.remove('hidden');
+        els.videoUnlockPassword.select();
+        return;
+      }
+
+      closeVideoPasswordModal(true);
+      openPlayer(video);
+    } catch (error) {
+      console.error('Video password check failed:', error);
+      els.videoPasswordError.textContent = 'Could not check the password. Please refresh the site and try again.';
+      els.videoPasswordError.classList.remove('hidden');
+    } finally {
+      submitButton.disabled = false;
+      submitButton.innerHTML = originalButtonText;
+    }
   }
 
  function openPlayer(video) {
@@ -968,9 +1096,29 @@ const mainName = (() => {
       document.getElementById('videoUrl').focus();
       return;
     }
+    const videoPassword = String(form.get('videoPassword') || '');
+    if (videoPassword.length < 4) {
+      els.formError.textContent = 'Please set a video password with at least 4 characters.';
+      els.formError.classList.remove('hidden');
+      document.getElementById('videoPassword').focus();
+      return;
+    }
+
+    let passwordSalt;
+    let passwordHash;
+    try {
+      passwordSalt = createVideoPasswordSalt();
+      passwordHash = await hashVideoPassword(videoPassword, passwordSalt);
+    } catch (error) {
+      console.error('Could not create video password lock:', error);
+      els.formError.textContent = 'Could not create the video password lock. Please open the website over HTTPS and try again.';
+      els.formError.classList.remove('hidden');
+      return;
+    }
+
     const next = normalizeVideo({
-      id: makeId(), title: form.get('title'), subject: form.get('subject'),mainPlaylist: form.get('mainPlaylist'), playlist: form.get('playlist'), teacher: form.get('teacher'),
-      url, description: form.get('description'), createdAt: Date.now()
+      id: makeId(), title: form.get('title'), subject: form.get('subject'), mainPlaylist: form.get('mainPlaylist'), playlist: form.get('playlist'), teacher: form.get('teacher'),
+      url, description: form.get('description'), createdAt: Date.now(), passwordSalt, passwordHash
     });
     if (!next) return;
     try {
@@ -1047,18 +1195,6 @@ const mainName = (() => {
   const userAuthMessage = document.getElementById('userAuthMessage');
   const userAuthEmail = document.getElementById('userAuthEmail');
   const userAuthPassword = document.getElementById('userAuthPassword');
-  const userAuthPasswordToggle = document.getElementById('toggleUserAuthPassword');
-
-userAuthPasswordToggle?.addEventListener('click', () => {
-  const showPassword = userAuthPassword.type === 'password';
-
-  userAuthPassword.type = showPassword ? 'text' : 'password';
-  userAuthPasswordToggle.textContent = showPassword ? 'Hide' : 'Show';
-  userAuthPasswordToggle.setAttribute(
-    'aria-pressed',
-    String(showPassword)
-  );
-});
 
   function setUserAuthMode(mode) {
     userAuthMode = mode === 'register' ? 'register' : 'login';
@@ -1334,6 +1470,9 @@ userAuthPasswordToggle?.addEventListener('click', () => {
   document.querySelectorAll('[data-close-modal]').forEach((button) => button.addEventListener('click', () => closeModal(els.addModal)));
   document.querySelector('[data-close-player]').addEventListener('click', closePlayer);
   els.addForm.addEventListener('submit', addVideo);
+  els.videoPasswordForm.addEventListener('submit', unlockVideo);
+  document.getElementById('closeVideoPasswordModal').addEventListener('click', () => closeVideoPasswordModal());
+  document.getElementById('cancelVideoPassword').addEventListener('click', () => closeVideoPasswordModal());
   document.getElementById('exportBtn').addEventListener('click', exportLibrary);
   document.getElementById('importBtn').addEventListener('click', () => els.importFile.click());
   els.search.addEventListener('input', render);
@@ -1413,7 +1552,7 @@ if (playButton) {
   );
 
   if (video) {
-    openPlayer(video);
+    requestVideoPlayback(video);
   }
 
   return;
@@ -1442,12 +1581,16 @@ if (playButton) {
   });
 
 
-  [els.addModal, els.playerModal].forEach((modal) => modal.addEventListener('click', (event) => {
-    if (event.target === modal) modal === els.playerModal ? closePlayer() : closeModal(modal);
+  [els.addModal, els.playerModal, els.videoPasswordModal].forEach((modal) => modal.addEventListener('click', (event) => {
+    if (event.target !== modal) return;
+    if (modal === els.playerModal) closePlayer();
+    else if (modal === els.videoPasswordModal) closeVideoPasswordModal();
+    else closeModal(modal);
   }));
   document.addEventListener('keydown', (event) => {
     if (event.key === 'Escape') {
       if (!els.playerModal.classList.contains('hidden')) closePlayer();
+      else if (!els.videoPasswordModal.classList.contains('hidden')) closeVideoPasswordModal();
       else if (!els.addModal.classList.contains('hidden')) closeModal(els.addModal);
       else if (!userAuthModal.classList.contains('hidden')) closeUserAuthModal();
     }
