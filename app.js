@@ -1013,7 +1013,15 @@ const mainName = (() => {
     }
   }
 
-document.body.classList.add('video-playing');
+function openPlayer(video) {
+  const videoId = getYoutubeId(video.url);
+
+  if (!videoId) {
+    window.open(video.url, '_blank', 'noopener,noreferrer');
+    return;
+  }
+
+  document.body.classList.add('video-playing');
 
   lastFocus = document.activeElement;
 
@@ -1026,12 +1034,10 @@ document.body.classList.add('video-playing');
     video.description || '';
   document.getElementById('openYoutubeLink').href = video.url;
 
-  // Move the player outside all playlist windows.
   if (els.playerModal.parentElement !== document.body) {
     document.body.appendChild(els.playerModal);
   }
 
-  // Keep the video player above every playlist window.
   els.playerModal.style.setProperty('position', 'fixed', 'important');
   els.playerModal.style.setProperty('inset', '0', 'important');
   els.playerModal.style.setProperty(
@@ -1049,11 +1055,6 @@ document.body.classList.add('video-playing');
   els.playerModal.querySelector('.modal-close').focus();
 }
 
-  function closePlayer() {
-  els.videoFrame.src = '';
-
-  closeModal(els.playerModal);
-}
 function closePlayer() {
   document.body.classList.remove('video-playing');
   els.videoFrame.src = '';
