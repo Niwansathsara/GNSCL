@@ -2125,3 +2125,28 @@ body[data-active-page="library"] #library { min-height: 60vh; }
     animation: none !important;
   }
 }
+/* Laptop/desktop: reduce scroll animation wobble */
+@keyframes gnsDesktopSoftRise {
+  from {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (min-width: 769px) {
+  .gns-home-reveal {
+    will-change: auto !important;
+  }
+
+  .gns-home-reveal.is-revealed {
+    animation: gnsDesktopSoftRise
+      0.75s ease-out
+      var(--gns-reveal-delay, 0ms)
+      both !important;
+  }
+}
