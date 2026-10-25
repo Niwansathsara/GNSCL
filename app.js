@@ -1013,13 +1013,7 @@ const mainName = (() => {
     }
   }
 
- function openPlayer(video) {
-  const videoId = getYoutubeId(video.url);
-
-  if (!videoId) {
-    window.open(video.url, '_blank', 'noopener,noreferrer');
-    return;
-  }
+document.body.classList.add('video-playing');
 
   lastFocus = document.activeElement;
 
