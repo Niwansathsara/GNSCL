@@ -1054,6 +1054,11 @@ document.body.classList.add('video-playing');
 
   closeModal(els.playerModal);
 }
+function closePlayer() {
+  document.body.classList.remove('video-playing');
+  els.videoFrame.src = '';
+  closeModal(els.playerModal);
+}
 
   function notify(message) {
     els.toastText.textContent = message;
