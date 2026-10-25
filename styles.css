@@ -2551,3 +2551,29 @@ body[data-active-page="about"] .gns-home-reveal {
     min-width: 0 !important;
   }
 }
+
+/* Fix video thumbnails on mobile only */
+@media screen and (max-width: 650px) {
+  #videoGrid .video-thumbnail {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    overflow: hidden !important;
+  }
+
+  #videoGrid .video-thumbnail > img:not(.hidden) {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 1px !important;
+    object-fit: cover !important;
+    position: relative !important;
+    z-index: 1 !important;
+  }
+
+  #videoGrid .video-thumbnail .thumb-subject-art.hidden {
+    display: none !important;
+  }
+}
