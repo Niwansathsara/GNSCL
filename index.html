@@ -315,7 +315,24 @@
         <label class="field-label" for="userAuthEmail">Email address</label>
         <input class="form-control" id="userAuthEmail" type="email" autocomplete="email" placeholder="Enter your email" required>
         <label class="field-label" for="userAuthPassword">Password</label>
-        <input class="form-control" id="userAuthPassword" type="password" autocomplete="current-password" minlength="6" placeholder="At least 6 characters" required>
+       <div class="password-input-wrap">
+  <input
+    class="form-control"
+    id="userAuthPassword"
+    type="password"
+    autocomplete="current-password"
+    minlength="6"
+    placeholder="At least 6 characters"
+    required
+  >
+  <button
+    class="password-toggle-btn"
+    id="toggleUserAuthPassword"
+    type="button"
+    aria-controls="userAuthPassword"
+    aria-pressed="false"
+  >Show</button>
+</div>
         <p id="userAuthMessage" class="user-auth-message" role="status" aria-live="polite"></p>
         <button class="button button-primary user-auth-submit" id="userAuthSubmit" type="submit">Login</button>
         <button class="button button-quiet user-auth-toggle" id="userAuthToggle" type="button">Create a new account</button>
