@@ -2175,3 +2175,12 @@ html {
     min-height: 100%;
   }
 }
+/* Keep scroll-reveal animation on Home only */
+body[data-active-page="library"] .gns-home-reveal,
+body[data-active-page="about"] .gns-home-reveal {
+  opacity: 1 !important;
+  animation: none !important;
+  transform: none !important;
+  translate: none !important;
+  will-change: auto !important;
+}
