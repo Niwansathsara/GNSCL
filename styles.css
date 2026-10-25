@@ -2160,3 +2160,18 @@ html {
     overflow-y: scroll;
   }
 }
+/* Fix double scrollbar and sudden page shift on laptops */
+@media (min-width: 769px) {
+  html {
+    overflow-x: clip !important;
+    overflow-y: scroll !important;
+    scrollbar-gutter: stable;
+  }
+
+  body {
+    overflow-x: clip !important;
+    overflow-y: visible !important;
+    height: auto !important;
+    min-height: 100%;
+  }
+}
