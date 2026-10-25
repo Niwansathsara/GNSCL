@@ -2048,7 +2048,7 @@ body[data-active-page="library"] #library { min-height: 60vh; }
   opacity: 0;
   animation:
     gnsSoftRise 1s ease-out 0.1s forwards,
-    gnsGentleFloat 3.8s ease-in-out 1.4s infinite;
+    gnsGentleFloat 3.2s ease-in-out 1.4s infinite;
 }
 
 .hero-copy #hero-title .hero-title-line-first {
