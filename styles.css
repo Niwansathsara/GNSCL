@@ -2184,3 +2184,37 @@ body[data-active-page="about"] .gns-home-reveal {
   translate: none !important;
   will-change: auto !important;
 }
+/* Password Show / Hide button */
+.password-input-wrap {
+  position: relative;
+  width: 100%;
+}
+
+.password-input-wrap .form-control {
+  padding-right: 76px;
+}
+
+.password-toggle-btn {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  border: 0;
+  background: transparent;
+  color: #5269e8;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 8px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.password-toggle-btn:hover {
+  background: #f0efff;
+}
+
+.password-toggle-btn:focus-visible {
+  outline: 2px solid #5269e8;
+  outline-offset: 2px;
+}
