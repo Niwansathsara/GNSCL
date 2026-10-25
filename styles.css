@@ -2675,3 +2675,10 @@ body[data-active-page="about"] .gns-home-reveal {
     will-change: transform;
   }
 }
+/* Desktop: reduce background rendering while video is playing */
+@media screen and (min-width: 651px) {
+  body:has(#playerModal:not(.hidden)) > :not(#playerModal),
+  body:has(#playerModal:not(.hidden)) > :not(#playerModal) * {
+    animation-play-state: paused !important;
+  }
+}
