@@ -2145,7 +2145,7 @@ body[data-active-page="library"] #library { min-height: 60vh; }
 
   .gns-home-reveal.is-revealed {
     animation: gnsDesktopSoftRise
-      1s ease-out
+      1.5s ease-out
       var(--gns-reveal-delay, 0ms)
       both !important;
   }
