@@ -2577,3 +2577,32 @@ body[data-active-page="about"] .gns-home-reveal {
     display: none !important;
   }
 }
+
+/* Mobile: Fix Main Playlist thumbnail preview only */
+@media screen and (max-width: 650px) {
+  #videoGrid .playlist-catalog-preview {
+    position: relative !important;
+    display: block !important;
+    width: 100% !important;
+    aspect-ratio: 16 / 9 !important;
+    overflow: hidden !important;
+  }
+
+  #videoGrid .playlist-catalog-preview > img:not(.hidden) {
+    display: block !important;
+    position: absolute !important;
+    inset: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+
+  #videoGrid .playlist-catalog-preview > .thumb-subject-art {
+    position: absolute !important;
+    inset: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+  }
+}
