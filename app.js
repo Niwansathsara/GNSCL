@@ -1047,6 +1047,18 @@ const mainName = (() => {
   const userAuthMessage = document.getElementById('userAuthMessage');
   const userAuthEmail = document.getElementById('userAuthEmail');
   const userAuthPassword = document.getElementById('userAuthPassword');
+  const userAuthPasswordToggle = document.getElementById('toggleUserAuthPassword');
+
+userAuthPasswordToggle?.addEventListener('click', () => {
+  const showPassword = userAuthPassword.type === 'password';
+
+  userAuthPassword.type = showPassword ? 'text' : 'password';
+  userAuthPasswordToggle.textContent = showPassword ? 'Hide' : 'Show';
+  userAuthPasswordToggle.setAttribute(
+    'aria-pressed',
+    String(showPassword)
+  );
+});
 
   function setUserAuthMode(mode) {
     userAuthMode = mode === 'register' ? 'register' : 'login';
