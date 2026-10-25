@@ -2647,3 +2647,18 @@ body[data-active-page="about"] .gns-home-reveal {
     display: none !important;
   }
 }
+
+/* Mobile only: Stop subject-logo flicker */
+@media screen and (max-width: 650px) {
+  .playlist-catalog-preview > .thumb-subject-art,
+  .video-thumbnail > .thumb-subject-art {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+  }
+
+  .playlist-catalog-preview > img,
+  .video-thumbnail > img {
+    backface-visibility: hidden;
+  }
+}
