@@ -2175,18 +2175,3 @@ html {
     min-height: 100%;
   }
 }
-/* Mobile: keep natural touch scrolling */
-@media (max-width: 768px) {
-  html {
-    scroll-behavior: auto !important;
-    overflow-x: clip !important;
-    overflow-y: auto !important;
-    overscroll-behavior-y: auto !important;
-  }
-
-  body {
-    overflow-x: clip !important;
-    overflow-y: visible !important;
-    -webkit-overflow-scrolling: touch;
-  }
-}
