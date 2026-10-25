@@ -2663,22 +2663,24 @@ body[data-active-page="about"] .gns-home-reveal {
   }
 }
 
-/* GNS Class Library — desktop video smoothness */
+/* GNS: Desktop video playback optimization */
 @media screen and (min-width: 651px) {
+
+  /* Let the browser manage the video iframe rendering */
   .player-frame-wrap {
-    isolation: isolate;
+    isolation: auto !important;
   }
 
   .player-frame-wrap iframe {
-    transform: translate3d(0, 0, 0);
-    backface-visibility: hidden;
-    will-change: transform;
+    transform: none !important;
+    backface-visibility: visible !important;
+    will-change: auto !important;
   }
-}
-/* Desktop: reduce background rendering while video is playing */
-@media screen and (min-width: 651px) {
-  body:has(#playerModal:not(.hidden)) > :not(#playerModal),
-  body:has(#playerModal:not(.hidden)) > :not(#playerModal) * {
+
+  /* Pause background animations while the player is open.
+     Keep the existing blurred overlay and player design. */
+  body:has(#playerModal:not(.hidden)) > :not(#playerModal):not(script):not(style),
+  body:has(#playerModal:not(.hidden)) > :not(#playerModal):not(script):not(style) * {
     animation-play-state: paused !important;
   }
 }
