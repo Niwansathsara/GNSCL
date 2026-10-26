@@ -1096,31 +1096,52 @@ function closePlayer() {
       document.getElementById('videoUrl').focus();
       return;
     }
-    const videoPassword = String(form.get('videoPassword') || '');
-    if (videoPassword.length < 4) {
-      els.formError.textContent = 'Please set a video password with at least 4 characters.';
-      els.formError.classList.remove('hidden');
-      document.getElementById('videoPassword').focus();
-      return;
-    }
 
-    let passwordSalt;
-    let passwordHash;
-    try {
-      passwordSalt = createVideoPasswordSalt();
-      passwordHash = await hashVideoPassword(videoPassword, passwordSalt);
-    } catch (error) {
-      console.error('Could not create video password lock:', error);
-      els.formError.textContent = 'Could not create the video password lock. Please open the website over HTTPS and try again.';
-      els.formError.classList.remove('hidden');
-      return;
-    }
+const videoPassword = String(form.get('videoPassword') || '').trim();
 
-    const next = normalizeVideo({
-      id: makeId(), title: form.get('title'), subject: form.get('subject'), mainPlaylist: form.get('mainPlaylist'), playlist: form.get('playlist'), teacher: form.get('teacher'),
-      url, description: form.get('description'), createdAt: Date.now(), passwordSalt, passwordHash
-    });
-    if (!next) return;
+let passwordSalt;
+let passwordHash;
+
+// Password එකක් දුන්නොත් පමණක් lock එක සාදන්න.
+if (videoPassword) {
+  if (videoPassword.length < 4) {
+    els.formError.textContent =
+      'Password එකක් දෙනවා නම් අවම වශයෙන් අකුරු 4ක් තිබිය යුතුයි.';
+    els.formError.classList.remove('hidden');
+    document.getElementById('videoPassword').focus();
+    return;
+  }
+
+  try {
+    passwordSalt = createVideoPasswordSalt();
+    passwordHash = await hashVideoPassword(
+      videoPassword,
+      passwordSalt
+    );
+  } catch (error) {
+    console.error('Could not create video password lock:', error);
+    els.formError.textContent =
+      'Could not create the video password lock. Please refresh and try again.';
+    els.formError.classList.remove('hidden');
+    return;
+  }
+}
+
+const next = normalizeVideo({
+  id: makeId(),
+  title: form.get('title'),
+  subject: form.get('subject'),
+  mainPlaylist: form.get('mainPlaylist'),
+  playlist: form.get('playlist'),
+  teacher: form.get('teacher'),
+  url,
+  description: form.get('description'),
+  createdAt: Date.now(),
+  ...(videoPassword ? { passwordSalt, passwordHash } : {})
+});
+
+if (!next) return;
+
     try {
       await setDoc(doc(db, 'videos', next.id), next);
       selectedSubject = next.subject;
