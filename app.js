@@ -617,8 +617,9 @@ const mainPlaylist = (() => {
 const matchesSubject =
   selectedSubject === 'all' || video.subject === selectedSubject;
 const matchesSaved = !onlySaved || saved.has(video.id);
-const matchesLock = !lockedOnly || hasVideoPasswordLock(video);
-
+const matchesLock = lockedOnly
+  ? hasVideoPasswordLock(video)
+  : !hasVideoPasswordLock(video);
 return matchesText && matchesSubject && matchesSaved && matchesLock;
     });
     if (els.sort.value === 'oldest') list.sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
