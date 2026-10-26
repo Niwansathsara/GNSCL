@@ -105,7 +105,6 @@ import { firebaseConfig, adminEmail } from "./firebase-config.js";
   let activeMainCategoryKey = null;
   let activeSubjectModal = null;
   let selectedSubject = 'all';
-  let lockedOnly = false;
   let onlySaved = false;
   let toastTimer;
   let lastFocus = null;
@@ -613,14 +612,7 @@ const mainPlaylist = (() => {
     const query = els.search.value.trim().toLocaleLowerCase();
     let list = all.filter((video) => {
       const text = [   video.title,   video.subject,   video.teacher,   video.description,   video.playlist ].join(' ').toLocaleLowerCase();
-     const matchesText = !query || text.includes(query);
-const matchesSubject =
-  selectedSubject === 'all' || video.subject === selectedSubject;
-const matchesSaved = !onlySaved || saved.has(video.id);
-const matchesLock = lockedOnly
-  ? hasVideoPasswordLock(video)
-  : !hasVideoPasswordLock(video);
-return matchesText && matchesSubject && matchesSaved && matchesLock;
+      return (!query || text.includes(query)) && (selectedSubject === 'all' || video.subject === selectedSubject) && (!onlySaved || saved.has(video.id));
     });
     if (els.sort.value === 'oldest') list.sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
     else if (els.sort.value === 'az') list.sort((a, b) => a.title.localeCompare(b.title));
@@ -628,90 +620,25 @@ return matchesText && matchesSubject && matchesSaved && matchesLock;
     return list;
   }
 
- function renderFilters(all) {
-  const unlockedVideos = all.filter(
-    (video) => !hasVideoPasswordLock(video)
-  );
-
-  const lockedVideos = all.filter(
-    (video) => hasVideoPasswordLock(video)
-  );
-
-  const subjectCounts = new Map();
-
-  unlockedVideos.forEach((video) => {
-    subjectCounts.set(
-      video.subject,
-      (subjectCounts.get(video.subject) || 0) + 1
-    );
-  });
-
-  const actualSubjects = [...subjectCounts.keys()].sort((a, b) => {
-    const ai = SUBJECT_ORDER.indexOf(a);
-    const bi = SUBJECT_ORDER.indexOf(b);
-
-    if (ai < 0 && bi < 0) return a.localeCompare(b);
-    if (ai < 0) return 1;
-    if (bi < 0) return -1;
-
-    return ai - bi;
-  });
-
-  const chips = [
-    {
-      kind: 'subject',
-      subject: 'all',
-      label: 'All videos',
-      count: unlockedVideos.length
-    },
-
-    ...actualSubjects.map((subject) => ({
-      kind: 'subject',
-      subject,
-      label: subject,
-      count: subjectCounts.get(subject)
-    })),
-
-    {
-      kind: 'locked',
-      label: '🔒 Locked',
-      count: lockedVideos.length
-    }
-  ];
-
-  els.filters.innerHTML = chips.map((chip) => {
-    const isLockedTab = chip.kind === 'locked';
-
-    const isActive = isLockedTab
-      ? lockedOnly
-      : !lockedOnly && selectedSubject === chip.subject;
-
-    const dataAttribute = isLockedTab
-      ? 'data-locked-filter="true"'
-      : `data-subject="${safeText(chip.subject)}"`;
-
-    return `
-      <button
-        class="filter-chip ${isActive ? 'active' : ''}"
-        ${dataAttribute}
-        type="button"
-      >
-        ${safeText(chip.label)}
-        <span>${chip.count}</span>
-      </button>
-    `;
-  }).join('');
-
-  els.allCount.textContent = String(unlockedVideos.length);
-
-  document.querySelectorAll('[data-subject-count]').forEach((node) => {
-    const subject = node.getAttribute('data-subject-count');
-    const count = subjectCounts.get(subject) || 0;
-
-    node.textContent =
-      `${count} ${count === 1 ? 'lesson' : 'lessons'}`;
-  });
-}
+  function renderFilters(all) {
+    const subjectCounts = new Map();
+    all.forEach((video) => subjectCounts.set(video.subject, (subjectCounts.get(video.subject) || 0) + 1));
+    const actualSubjects = [...subjectCounts.keys()].sort((a, b) => {
+      const ai = SUBJECT_ORDER.indexOf(a), bi = SUBJECT_ORDER.indexOf(b);
+      if (ai < 0 && bi < 0) return a.localeCompare(b);
+      if (ai < 0) return 1;
+      if (bi < 0) return -1;
+      return ai - bi;
+    });
+    const chips = [{ subject: 'all', label: 'All videos', count: all.length }, ...actualSubjects.map((subject) => ({ subject, label: subject, count: subjectCounts.get(subject) }))];
+    els.filters.innerHTML = chips.map((chip) => `<button class="filter-chip ${selectedSubject === chip.subject ? 'active' : ''}" data-subject="${safeText(chip.subject)}" type="button">${safeText(chip.label)} <span>${chip.count}</span></button>`).join('');
+    els.allCount.textContent = String(all.length);
+    document.querySelectorAll('[data-subject-count]').forEach((node) => {
+      const subject = node.getAttribute('data-subject-count');
+      const count = subjectCounts.get(subject) || 0;
+      node.textContent = `${count} ${count === 1 ? 'lesson' : 'lessons'}`;
+    });
+  }
 
 function renderPlaylistGroups(videos) {
   const mainGroups = new Map();
@@ -989,15 +916,7 @@ const mainName = (() => {
     els.favoritesToggle.setAttribute('aria-pressed', String(onlySaved));
     els.favoritesToggle.innerHTML = onlySaved ? '<span>♥</span>' : '<span>♡</span>';
     els.favoritesToggle.title = onlySaved ? 'Show all videos' : 'Show saved videos';
-   document.querySelectorAll('.filter-chip').forEach((chip) => {
-  const isLockedTab = chip.hasAttribute('data-locked-filter');
-
-  const isActive = isLockedTab
-    ? lockedOnly
-    : (!lockedOnly && chip.dataset.subject === selectedSubject);
-
-  chip.classList.toggle('active', isActive);
-});
+    document.querySelectorAll('.filter-chip').forEach((chip) => chip.classList.toggle('active', chip.dataset.subject === selectedSubject));
   }
 
   function openAddModal(subject = '') {
@@ -1094,15 +1013,13 @@ const mainName = (() => {
     }
   }
 
-function openPlayer(video) {
+ function openPlayer(video) {
   const videoId = getYoutubeId(video.url);
 
   if (!videoId) {
     window.open(video.url, '_blank', 'noopener,noreferrer');
     return;
   }
-
-  document.body.classList.add('video-playing');
 
   lastFocus = document.activeElement;
 
@@ -1115,10 +1032,12 @@ function openPlayer(video) {
     video.description || '';
   document.getElementById('openYoutubeLink').href = video.url;
 
+  // Move the player outside all playlist windows.
   if (els.playerModal.parentElement !== document.body) {
     document.body.appendChild(els.playerModal);
   }
 
+  // Keep the video player above every playlist window.
   els.playerModal.style.setProperty('position', 'fixed', 'important');
   els.playerModal.style.setProperty('inset', '0', 'important');
   els.playerModal.style.setProperty(
@@ -1136,9 +1055,9 @@ function openPlayer(video) {
   els.playerModal.querySelector('.modal-close').focus();
 }
 
-function closePlayer() {
-  document.body.classList.remove('video-playing');
+  function closePlayer() {
   els.videoFrame.src = '';
+
   closeModal(els.playerModal);
 }
 
@@ -1177,52 +1096,43 @@ function closePlayer() {
       document.getElementById('videoUrl').focus();
       return;
     }
+    // A password is optional. A blank field publishes a normal, unlocked video.
+    const videoPassword = String(form.get('videoPassword') || '');
+    const wantsPasswordLock = videoPassword.trim().length > 0;
+    let passwordSalt;
+    let passwordHash;
 
-const videoPassword = String(form.get('videoPassword') || '').trim();
+    if (wantsPasswordLock) {
+      if (videoPassword.length < 4) {
+        els.formError.textContent = 'If you set a video password, it must contain at least 4 characters. Leave it blank for no password.';
+        els.formError.classList.remove('hidden');
+        document.getElementById('videoPassword').focus();
+        return;
+      }
 
-let passwordSalt;
-let passwordHash;
+      try {
+        passwordSalt = createVideoPasswordSalt();
+        passwordHash = await hashVideoPassword(videoPassword, passwordSalt);
+      } catch (error) {
+        console.error('Could not create video password lock:', error);
+        els.formError.textContent = 'Could not create the video password lock. Please open the website over HTTPS and try again.';
+        els.formError.classList.remove('hidden');
+        return;
+      }
+    }
 
-// Password එකක් දුන්නොත් පමණක් lock එක සාදන්න.
-if (videoPassword) {
-  if (videoPassword.length < 4) {
-    els.formError.textContent =
-      'Password එකක් දෙනවා නම් අවම වශයෙන් අකුරු 4ක් තිබිය යුතුයි.';
-    els.formError.classList.remove('hidden');
-    document.getElementById('videoPassword').focus();
-    return;
-  }
+    const videoData = {
+      id: makeId(), title: form.get('title'), subject: form.get('subject'), mainPlaylist: form.get('mainPlaylist'), playlist: form.get('playlist'), teacher: form.get('teacher'),
+      url, description: form.get('description'), createdAt: Date.now()
+    };
+    // Add password metadata only when the owner chose to lock this video.
+    if (wantsPasswordLock) {
+      videoData.passwordSalt = passwordSalt;
+      videoData.passwordHash = passwordHash;
+    }
 
-  try {
-    passwordSalt = createVideoPasswordSalt();
-    passwordHash = await hashVideoPassword(
-      videoPassword,
-      passwordSalt
-    );
-  } catch (error) {
-    console.error('Could not create video password lock:', error);
-    els.formError.textContent =
-      'Could not create the video password lock. Please refresh and try again.';
-    els.formError.classList.remove('hidden');
-    return;
-  }
-}
-
-const next = normalizeVideo({
-  id: makeId(),
-  title: form.get('title'),
-  subject: form.get('subject'),
-  mainPlaylist: form.get('mainPlaylist'),
-  playlist: form.get('playlist'),
-  teacher: form.get('teacher'),
-  url,
-  description: form.get('description'),
-  createdAt: Date.now(),
-  ...(videoPassword ? { passwordSalt, passwordHash } : {})
-});
-
-if (!next) return;
-
+    const next = normalizeVideo(videoData);
+    if (!next) return;
     try {
       await setDoc(doc(db, 'videos', next.id), next);
       selectedSubject = next.subject;
@@ -1582,22 +1492,9 @@ if (!next) return;
   els.favoritesToggle.addEventListener('click', () => { onlySaved = !onlySaved; render(); });
   els.clearFilters.addEventListener('click', clearFilters);
 els.filters.addEventListener('click', (event) => {
-  const lockedButton = event.target.closest('[data-locked-filter]');
-
-  if (lockedButton) {
-    lockedOnly = true;
-    selectedSubject = 'all';
-    onlySaved = false;
-    activeMainCategoryKey = null;
-    activePlaylistKey = null;
-    render();
-    return;
-  }
-
   const button = event.target.closest('[data-subject]');
   if (!button) return;
 
-  lockedOnly = false;
   selectedSubject = button.dataset.subject;
   onlySaved = false;
   activeMainCategoryKey = null;
@@ -1718,6 +1615,23 @@ if (playButton) {
       event.preventDefault(); els.importFile.click();
     }
   });
+  // Show / hide the password without changing password validation or unlock behaviour.
+  function setupPasswordToggle(inputId, buttonId) {
+    const input = document.getElementById(inputId);
+    const button = document.getElementById(buttonId);
+    if (!input || !button) return;
+
+    button.addEventListener('click', () => {
+      const showPassword = input.type === 'password';
+      input.type = showPassword ? 'text' : 'password';
+      button.textContent = showPassword ? 'Hide' : 'Show';
+      button.setAttribute('aria-pressed', String(showPassword));
+    });
+  }
+
+  setupPasswordToggle('videoPassword', 'toggleVideoPassword');
+  setupPasswordToggle('videoUnlockPassword', 'toggleVideoUnlockPassword');
+
   document.getElementById('yearNow').textContent = String(new Date().getFullYear());
   document.body.dataset.activePage = 'home';
   applyAdminControls();
