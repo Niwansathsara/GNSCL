@@ -610,10 +610,18 @@ const mainPlaylist = (() => {
   function currentFilteredVideos() {
     const all = getAllVideos();
     const query = els.search.value.trim().toLocaleLowerCase();
+    const showingLockedOnly = selectedSubject === 'locked';
+
     let list = all.filter((video) => {
-      const text = [   video.title,   video.subject,   video.teacher,   video.description,   video.playlist ].join(' ').toLocaleLowerCase();
-      return (!query || text.includes(query)) && (selectedSubject === 'all' || video.subject === selectedSubject) && (!onlySaved || saved.has(video.id));
+      const locked = hasVideoPasswordLock(video);
+      const text = [video.title, video.subject, video.teacher, video.description, video.playlist, video.mainPlaylist]
+        .join(' ')
+        .toLocaleLowerCase();
+      const lockMatch = showingLockedOnly ? locked : !locked;
+      const subjectMatch = showingLockedOnly || selectedSubject === 'all' || video.subject === selectedSubject;
+      return lockMatch && subjectMatch && (!query || text.includes(query)) && (!onlySaved || saved.has(video.id));
     });
+
     if (els.sort.value === 'oldest') list.sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
     else if (els.sort.value === 'az') list.sort((a, b) => a.title.localeCompare(b.title));
     else list.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
@@ -621,8 +629,14 @@ const mainPlaylist = (() => {
   }
 
   function renderFilters(all) {
+    // Password-locked videos live in their own final tab and are excluded from All/subject tabs.
+    const unlockedVideos = all.filter((video) => !hasVideoPasswordLock(video));
+    const lockedVideos = all.filter((video) => hasVideoPasswordLock(video));
     const subjectCounts = new Map();
-    all.forEach((video) => subjectCounts.set(video.subject, (subjectCounts.get(video.subject) || 0) + 1));
+    unlockedVideos.forEach((video) => {
+      const subject = video.subject || 'Other';
+      subjectCounts.set(subject, (subjectCounts.get(subject) || 0) + 1);
+    });
     const actualSubjects = [...subjectCounts.keys()].sort((a, b) => {
       const ai = SUBJECT_ORDER.indexOf(a), bi = SUBJECT_ORDER.indexOf(b);
       if (ai < 0 && bi < 0) return a.localeCompare(b);
@@ -630,9 +644,13 @@ const mainPlaylist = (() => {
       if (bi < 0) return -1;
       return ai - bi;
     });
-    const chips = [{ subject: 'all', label: 'All videos', count: all.length }, ...actualSubjects.map((subject) => ({ subject, label: subject, count: subjectCounts.get(subject) }))];
+    const chips = [
+      { subject: 'all', label: 'All videos', count: unlockedVideos.length },
+      ...actualSubjects.map((subject) => ({ subject, label: subject, count: subjectCounts.get(subject) })),
+      { subject: 'locked', label: '🔒 Locked', count: lockedVideos.length }
+    ];
     els.filters.innerHTML = chips.map((chip) => `<button class="filter-chip ${selectedSubject === chip.subject ? 'active' : ''}" data-subject="${safeText(chip.subject)}" type="button">${safeText(chip.label)} <span>${chip.count}</span></button>`).join('');
-    els.allCount.textContent = String(all.length);
+    els.allCount.textContent = String(unlockedVideos.length);
     document.querySelectorAll('[data-subject-count]').forEach((node) => {
       const subject = node.getAttribute('data-subject-count');
       const count = subjectCounts.get(subject) || 0;
@@ -739,7 +757,7 @@ const mainName = (() => {
   }
 
   const mainCards = categories.map((main) => {
-    const title = selectedSubject === 'all'
+    const title = (selectedSubject === 'all' || selectedSubject === 'locked')
       ? `${main.subject} · ${main.name}`
       : main.name;
 
@@ -888,6 +906,9 @@ const mainName = (() => {
     els.statSaved.textContent = String(displayedSavedCount);
     els.videoGrid.innerHTML = renderPlaylistGroups(filtered);
     const noVideosAtAll = all.length === 0;
+    const unlockedCount = all.filter((video) => !hasVideoPasswordLock(video)).length;
+    const lockedCount = all.length - unlockedCount;
+    const visibleCollectionCount = selectedSubject === 'locked' ? lockedCount : unlockedCount;
     els.videoGrid.classList.toggle('hidden', noVideosAtAll || filtered.length === 0);
     els.emptyState.classList.toggle('hidden', !noVideosAtAll && filtered.length !== 0);
     if (noVideosAtAll) {
@@ -903,14 +924,28 @@ const mainName = (() => {
         els.emptyState.querySelector('.empty-tip').textContent = '';
       }
     } else if (filtered.length === 0) {
-      els.emptyState.querySelector('h3').textContent = onlySaved ? 'Nothing saved just yet.' : 'No videos match this search.';
-      els.emptyState.querySelector('p').textContent = onlySaved ? 'Tap the heart on any lesson to keep it here for your next revision session.' : 'Try another keyword or subject, or clear the filters to see the full library.';
+      let emptyTitle = 'No videos match this search.';
+      let emptyMessage = 'Try another keyword or subject, or clear the filters to see the full library.';
+      if (onlySaved) {
+        emptyTitle = 'Nothing saved just yet.';
+        emptyMessage = 'Tap the heart on any lesson to keep it here for your next revision session.';
+      } else if (selectedSubject === 'locked') {
+        emptyTitle = lockedCount === 0 ? 'No password-locked videos yet.' : 'No locked videos match this search.';
+        emptyMessage = lockedCount === 0
+          ? 'Videos with a viewing password will appear in this tab.'
+          : 'Try another keyword or clear the search to see all locked videos.';
+      } else if (selectedSubject === 'all' && unlockedCount === 0 && lockedCount > 0) {
+        emptyTitle = 'All videos are password locked.';
+        emptyMessage = 'Open the 🔒 Locked tab at the end of the filters to find these lessons.';
+      }
+      els.emptyState.querySelector('h3').textContent = emptyTitle;
+      els.emptyState.querySelector('p').textContent = emptyMessage;
       els.emptyState.querySelector('.empty-tip').textContent = '';
       els.videoGrid.classList.add('hidden');
       els.emptyState.classList.remove('hidden');
     }
     if (noVideosAtAll) els.resultsLabel.textContent = 'A fresh start — add your first lesson';
-    else els.resultsLabel.textContent = `Showing ${filtered.length} of ${all.length} ${all.length === 1 ? 'video' : 'videos'}`;
+    else els.resultsLabel.textContent = `Showing ${filtered.length} of ${visibleCollectionCount} ${visibleCollectionCount === 1 ? 'video' : 'videos'}`;
     const changed = !!els.search.value || selectedSubject !== 'all' || onlySaved;
     els.clearFilters.classList.toggle('hidden', !changed);
     els.favoritesToggle.setAttribute('aria-pressed', String(onlySaved));
@@ -1082,6 +1117,8 @@ const mainName = (() => {
     els.search.value = '';
     selectedSubject = 'all';
     onlySaved = false;
+    activeMainCategoryKey = null;
+    activePlaylistKey = null;
     render();
   }
 
@@ -1499,6 +1536,7 @@ els.filters.addEventListener('click', (event) => {
   onlySaved = false;
   activeMainCategoryKey = null;
   activePlaylistKey = null;
+  els.search.value = '';
 
   render();
 });
