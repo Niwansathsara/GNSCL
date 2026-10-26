@@ -105,6 +105,7 @@ import { firebaseConfig, adminEmail } from "./firebase-config.js";
   let activeMainCategoryKey = null;
   let activeSubjectModal = null;
   let selectedSubject = 'all';
+  let lockedOnly = false;
   let onlySaved = false;
   let toastTimer;
   let lastFocus = null;
@@ -612,7 +613,13 @@ const mainPlaylist = (() => {
     const query = els.search.value.trim().toLocaleLowerCase();
     let list = all.filter((video) => {
       const text = [   video.title,   video.subject,   video.teacher,   video.description,   video.playlist ].join(' ').toLocaleLowerCase();
-      return (!query || text.includes(query)) && (selectedSubject === 'all' || video.subject === selectedSubject) && (!onlySaved || saved.has(video.id));
+     const matchesText = !query || text.includes(query);
+const matchesSubject =
+  selectedSubject === 'all' || video.subject === selectedSubject;
+const matchesSaved = !onlySaved || saved.has(video.id);
+const matchesLock = !lockedOnly || hasVideoPasswordLock(video);
+
+return matchesText && matchesSubject && matchesSaved && matchesLock;
     });
     if (els.sort.value === 'oldest') list.sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
     else if (els.sort.value === 'az') list.sort((a, b) => a.title.localeCompare(b.title));
@@ -630,8 +637,45 @@ const mainPlaylist = (() => {
       if (bi < 0) return -1;
       return ai - bi;
     });
-    const chips = [{ subject: 'all', label: 'All videos', count: all.length }, ...actualSubjects.map((subject) => ({ subject, label: subject, count: subjectCounts.get(subject) }))];
-    els.filters.innerHTML = chips.map((chip) => `<button class="filter-chip ${selectedSubject === chip.subject ? 'active' : ''}" data-subject="${safeText(chip.subject)}" type="button">${safeText(chip.label)} <span>${chip.count}</span></button>`).join('');
+    const lockedCount = all.filter(hasVideoPasswordLock).length;
+
+const chips = [
+  {
+    kind: 'subject',
+    subject: 'all',
+    label: 'All videos',
+    count: all.length
+  },
+  {
+    kind: 'locked',
+    label: '🔒 Locked',
+    count: lockedCount
+  },
+  ...actualSubjects.map((subject) => ({
+    kind: 'subject',
+    subject,
+    label: subject,
+    count: subjectCounts.get(subject)
+  }))
+];
+
+els.filters.innerHTML = chips.map((chip) => {
+  const isLockedTab = chip.kind === 'locked';
+  const isActive = isLockedTab
+    ? lockedOnly
+    : (!lockedOnly && selectedSubject === chip.subject);
+
+  const dataAttribute = isLockedTab
+    ? 'data-locked-filter="true"'
+    : `data-subject="${safeText(chip.subject)}"`;
+
+  return `
+    <button class="filter-chip ${isActive ? 'active' : ''}"
+      ${dataAttribute} type="button">
+      ${safeText(chip.label)} <span>${chip.count}</span>
+    </button>
+  `;
+}).join('');
     els.allCount.textContent = String(all.length);
     document.querySelectorAll('[data-subject-count]').forEach((node) => {
       const subject = node.getAttribute('data-subject-count');
@@ -916,7 +960,15 @@ const mainName = (() => {
     els.favoritesToggle.setAttribute('aria-pressed', String(onlySaved));
     els.favoritesToggle.innerHTML = onlySaved ? '<span>♥</span>' : '<span>♡</span>';
     els.favoritesToggle.title = onlySaved ? 'Show all videos' : 'Show saved videos';
-    document.querySelectorAll('.filter-chip').forEach((chip) => chip.classList.toggle('active', chip.dataset.subject === selectedSubject));
+   document.querySelectorAll('.filter-chip').forEach((chip) => {
+  const isLockedTab = chip.hasAttribute('data-locked-filter');
+
+  const isActive = isLockedTab
+    ? lockedOnly
+    : (!lockedOnly && chip.dataset.subject === selectedSubject);
+
+  chip.classList.toggle('active', isActive);
+});
   }
 
   function openAddModal(subject = '') {
@@ -1501,9 +1553,22 @@ if (!next) return;
   els.favoritesToggle.addEventListener('click', () => { onlySaved = !onlySaved; render(); });
   els.clearFilters.addEventListener('click', clearFilters);
 els.filters.addEventListener('click', (event) => {
+  const lockedButton = event.target.closest('[data-locked-filter]');
+
+  if (lockedButton) {
+    lockedOnly = true;
+    selectedSubject = 'all';
+    onlySaved = false;
+    activeMainCategoryKey = null;
+    activePlaylistKey = null;
+    render();
+    return;
+  }
+
   const button = event.target.closest('[data-subject]');
   if (!button) return;
 
+  lockedOnly = false;
   selectedSubject = button.dataset.subject;
   onlySaved = false;
   activeMainCategoryKey = null;
