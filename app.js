@@ -628,62 +628,90 @@ return matchesText && matchesSubject && matchesSaved && matchesLock;
     return list;
   }
 
-  function renderFilters(all) {
-    const subjectCounts = new Map();
-    all.forEach((video) => subjectCounts.set(video.subject, (subjectCounts.get(video.subject) || 0) + 1));
-    const actualSubjects = [...subjectCounts.keys()].sort((a, b) => {
-      const ai = SUBJECT_ORDER.indexOf(a), bi = SUBJECT_ORDER.indexOf(b);
-      if (ai < 0 && bi < 0) return a.localeCompare(b);
-      if (ai < 0) return 1;
-      if (bi < 0) return -1;
-      return ai - bi;
-    });
-    const lockedCount = all.filter(hasVideoPasswordLock).length;
+ function renderFilters(all) {
+  const unlockedVideos = all.filter(
+    (video) => !hasVideoPasswordLock(video)
+  );
 
-const chips = [
-  {
-    kind: 'subject',
-    subject: 'all',
-    label: 'All videos',
-    count: all.length
-  },
-  {
-    kind: 'locked',
-    label: '🔒 Locked',
-    count: lockedCount
-  },
-  ...actualSubjects.map((subject) => ({
-    kind: 'subject',
-    subject,
-    label: subject,
-    count: subjectCounts.get(subject)
-  }))
-];
+  const lockedVideos = all.filter(
+    (video) => hasVideoPasswordLock(video)
+  );
 
-els.filters.innerHTML = chips.map((chip) => {
-  const isLockedTab = chip.kind === 'locked';
-  const isActive = isLockedTab
-    ? lockedOnly
-    : (!lockedOnly && selectedSubject === chip.subject);
+  const subjectCounts = new Map();
 
-  const dataAttribute = isLockedTab
-    ? 'data-locked-filter="true"'
-    : `data-subject="${safeText(chip.subject)}"`;
+  unlockedVideos.forEach((video) => {
+    subjectCounts.set(
+      video.subject,
+      (subjectCounts.get(video.subject) || 0) + 1
+    );
+  });
 
-  return `
-    <button class="filter-chip ${isActive ? 'active' : ''}"
-      ${dataAttribute} type="button">
-      ${safeText(chip.label)} <span>${chip.count}</span>
-    </button>
-  `;
-}).join('');
-    els.allCount.textContent = String(all.length);
-    document.querySelectorAll('[data-subject-count]').forEach((node) => {
-      const subject = node.getAttribute('data-subject-count');
-      const count = subjectCounts.get(subject) || 0;
-      node.textContent = `${count} ${count === 1 ? 'lesson' : 'lessons'}`;
-    });
-  }
+  const actualSubjects = [...subjectCounts.keys()].sort((a, b) => {
+    const ai = SUBJECT_ORDER.indexOf(a);
+    const bi = SUBJECT_ORDER.indexOf(b);
+
+    if (ai < 0 && bi < 0) return a.localeCompare(b);
+    if (ai < 0) return 1;
+    if (bi < 0) return -1;
+
+    return ai - bi;
+  });
+
+  const chips = [
+    {
+      kind: 'subject',
+      subject: 'all',
+      label: 'All videos',
+      count: unlockedVideos.length
+    },
+
+    ...actualSubjects.map((subject) => ({
+      kind: 'subject',
+      subject,
+      label: subject,
+      count: subjectCounts.get(subject)
+    })),
+
+    {
+      kind: 'locked',
+      label: '🔒 Locked',
+      count: lockedVideos.length
+    }
+  ];
+
+  els.filters.innerHTML = chips.map((chip) => {
+    const isLockedTab = chip.kind === 'locked';
+
+    const isActive = isLockedTab
+      ? lockedOnly
+      : !lockedOnly && selectedSubject === chip.subject;
+
+    const dataAttribute = isLockedTab
+      ? 'data-locked-filter="true"'
+      : `data-subject="${safeText(chip.subject)}"`;
+
+    return `
+      <button
+        class="filter-chip ${isActive ? 'active' : ''}"
+        ${dataAttribute}
+        type="button"
+      >
+        ${safeText(chip.label)}
+        <span>${chip.count}</span>
+      </button>
+    `;
+  }).join('');
+
+  els.allCount.textContent = String(unlockedVideos.length);
+
+  document.querySelectorAll('[data-subject-count]').forEach((node) => {
+    const subject = node.getAttribute('data-subject-count');
+    const count = subjectCounts.get(subject) || 0;
+
+    node.textContent =
+      `${count} ${count === 1 ? 'lesson' : 'lessons'}`;
+  });
+}
 
 function renderPlaylistGroups(videos) {
   const mainGroups = new Map();
